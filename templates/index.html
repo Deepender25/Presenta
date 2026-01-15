@@ -90,6 +90,20 @@
                     </div>
                 </div>
 
+                <!-- Shadow Settings -->
+                <div class="control-group">
+                    <h3>Shadow</h3>
+                    <div class="input-wrapper">
+                        <label>Size <span id="shadow-size-val">1.0x</span></label>
+                        <input type="range" id="shadow-size" min="0" max="5" step="0.1" value="1">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Opacity <span id="shadow-opacity-val">1.0x</span></label>
+                        <input type="range" id="shadow-opacity" min="0" max="2" step="0.1" value="1">
+                    </div>
+                    <button id="reset-shadow-btn" class="secondary small-btn">↺ Reset Shadows</button>
+                </div>
+
                 <!-- Canvas Settings -->
                 <div class="control-group">
                     <h3>Canvas</h3>
@@ -104,7 +118,7 @@
                     </div>
                     <div class="input-wrapper">
                         <label>Background Color</label>
-                        <input type="color" id="bg-color" value="#121212">
+                        <input type="color" id="bg-color" value="#ECECEC">
                     </div>
                 </div>
 

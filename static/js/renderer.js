@@ -8,14 +8,16 @@ class CanvasRenderer {
         this.config = {
             width: 1920,
             height: 1080, // Default 16:9
-            bgColor: '#121212',
+            bgColor: '#ECECEC',
             deviceType: 'browser',
             orientation: 'landscape',
             resizeMode: 'fit',
             duration: 5,
             holdStart: 1,
             cornerRadius: 0,
-            fps: 60
+            fps: 60,
+            shadowSize: 1,
+            shadowOpacity: 1
         };
 
         // Frame State
@@ -189,6 +191,7 @@ class CanvasRenderer {
 
         if (sizeChanged) {
             this.resizeCanvas(); // Actually resize the element
+            this.setDeviceDefaults(this.config.deviceType);
         }
 
         this.updateFramePosition();
@@ -328,15 +331,30 @@ class CanvasRenderer {
         const totalPadding = bezel + shell;
         if (this.content || deviceType !== 'none') {
             ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.4)';
-            ctx.shadowBlur = 60;
-            ctx.shadowOffsetY = 30;
+
+            const { shadowSize, shadowOpacity } = this.config;
+
+            // Base shadow values
+            let sBlur = 60;
+            let sOffsetY = 30;
+            let sBaseOpacity = 0.4;
+
+            if (deviceType === 'browser') {
+                sBlur = 40;
+                sOffsetY = 20;
+                sBaseOpacity = 0.25;
+            }
+
+            // Apply Multipliers
+            ctx.shadowBlur = sBlur * shadowSize;
+            ctx.shadowOffsetY = sOffsetY * shadowSize;
+            ctx.shadowColor = `rgba(0,0,0,${sBaseOpacity * shadowOpacity})`;
+
             // Draw the 'shadow caster' shape (Outer Shell)
             ctx.fillStyle = (deviceType === 'none' || deviceType === 'browser') ? 'rgba(0,0,0,0)' : '#000';
 
             // For browser, shadow is cast by content rect (or window rect)
             if (deviceType === 'browser') {
-                ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
                 this.roundRect(ctx, fx, fy, fw, fh, r);
                 // Note: we don't fill here because browser header/content fill later.
                 // But to cast shadow we need to fill.
@@ -344,6 +362,24 @@ class CanvasRenderer {
                 ctx.fill();
             } else if (deviceType !== 'none') {
                 this.roundRect(ctx, fx - totalPadding, fy - totalPadding, fw + totalPadding * 2, fh + totalPadding * 2, r + totalPadding / 2);
+                ctx.fill();
+            } else {
+                // DeviceType == 'none'
+                // In previous code, if deviceType === 'none', we were entering here but maybe not drawing correctly for 'none' shadow? 
+                // Original logic around line 335: ctx.fillStyle = ... ? 'rgba(0,0,0,0)'
+                // And then line 345: else if (deviceType !== 'none') ...
+                // So 'none' was NOT casting a shadow in the original block if fillStyle was transparent and roundRect wasn't called?
+                // Wait, line 329 says `if (this.content || deviceType !== 'none')`
+                // IF NO DEVICE, we still want shadow? The original code had:
+                /*
+                   if (deviceType === 'browser') ...
+                   else if (deviceType !== 'none') ...
+                */
+                // So "none" actually fell through and didn't draw a shadow shape?
+                // Let's fix this to draw shadow for content rect if device is none.
+
+                this.roundRect(ctx, fx, fy, fw, fh, r);
+                ctx.fillStyle = '#fff'; // Need a fill to cast shadow
                 ctx.fill();
             }
             ctx.restore();

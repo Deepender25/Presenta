@@ -22,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const cornerRadiusEl = document.getElementById('corner-radius');
     const radiusValEl = document.getElementById('radius-val');
 
+    // Shadow Refs
+    const shadowSizeEl = document.getElementById('shadow-size');
+    const shadowSizeValEl = document.getElementById('shadow-size-val');
+    const shadowOpacityEl = document.getElementById('shadow-opacity');
+    const shadowOpacityValEl = document.getElementById('shadow-opacity-val');
+    const resetShadowBtn = document.getElementById('reset-shadow-btn');
+
     const btnPortrait = document.getElementById('btn-portrait');
     const btnLandscape = document.getElementById('btn-landscape');
 
@@ -142,6 +149,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     holdStartEl.oninput = (e) => renderer.setConfig({ holdStart: Number(e.target.value) });
+
+    // Shadow Settings
+    shadowSizeEl.oninput = (e) => {
+        const val = e.target.value;
+        shadowSizeValEl.textContent = `${val}x`;
+        renderer.setConfig({ shadowSize: Number(val) });
+    };
+
+    shadowOpacityEl.oninput = (e) => {
+        const val = e.target.value;
+        shadowOpacityValEl.textContent = `${val}x`;
+        renderer.setConfig({ shadowOpacity: Number(val) });
+    };
+
+    resetShadowBtn.onclick = () => {
+        shadowSizeEl.value = 1;
+        shadowOpacityEl.value = 1;
+        shadowSizeValEl.textContent = "1.0x";
+        shadowOpacityValEl.textContent = "1.0x";
+        renderer.setConfig({ shadowSize: 1, shadowOpacity: 1 });
+    };
 
     // Actions
     playBtn.onclick = () => {
