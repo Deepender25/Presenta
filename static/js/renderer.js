@@ -7,7 +7,7 @@ class CanvasRenderer {
         // Default Config
         this.config = {
             width: 1920,
-            height: 1920,
+            height: 1080, // Default 16:9
             bgColor: '#121212',
             deviceType: 'browser',
             orientation: 'landscape',
@@ -139,6 +139,9 @@ class CanvasRenderer {
     }
 
     updateFramePosition() {
+        // Enforce fit on internal interactions or config changes if desired? 
+        // No, let user resize freely, but initial defaults should fit.
+        // Actually, let's just center.
         this.frame.x = (this.canvas.width - this.frame.width) / 2;
         this.frame.y = (this.canvas.height - this.frame.height) / 2;
     }
@@ -149,6 +152,7 @@ class CanvasRenderer {
             this.setDeviceDefaults(newConfig.deviceType);
             this.config.deviceType = newConfig.deviceType;
             resettingDevice = true;
+
             // Sync orientation
             if (this.frame.width < this.frame.height) this.config.orientation = 'portrait';
             else this.config.orientation = 'landscape';
@@ -158,17 +162,30 @@ class CanvasRenderer {
             const reqPortrait = newConfig.orientation === 'portrait';
             if (!resettingDevice) {
                 const t = this.frame.width; this.frame.width = this.frame.height; this.frame.height = t;
+                // Fit after rotation
+                this.fitFrameToCanvas();
             } else {
                 const isPortrait = this.frame.width < this.frame.height;
                 if (isPortrait !== reqPortrait) {
                     const t = this.frame.width; this.frame.width = this.frame.height; this.frame.height = t;
+                    this.fitFrameToCanvas();
                 }
             }
         }
 
+        // Check if canvas size changing
+        const sizeChanged = (newConfig.width && newConfig.width !== this.config.width) ||
+            (newConfig.height && newConfig.height !== this.config.height);
+
         this.config = { ...this.config, ...newConfig };
+
+        if (sizeChanged) {
+            this.resizeCanvas(); // Actually resize the element
+        }
+
         this.updateFramePosition();
         this.draw();
+
         if (this.callbacks.onSizeChange) this.callbacks.onSizeChange(this.frame.width, this.frame.height);
     }
 
@@ -179,20 +196,49 @@ class CanvasRenderer {
 
     setDeviceDefaults(type) {
         let w, h;
+        // Reducing defaults slightly to ensure they look good instantly on 1080p canvas
         switch (type) {
-            case 'macbook': w = 1200; h = 775; break; // 16:10 approx
-            case 'browser': w = 1200; h = 800; break;
-            case 'ipad': w = 820; h = 1080; break; // 4:3
-            case 'iphone': w = 430; h = 932; break; // 19.5:9
-            case 'none': default: w = 1000; h = 1000;
+            case 'macbook': w = 1000; h = 640; break; // ~16:10 reduced
+            case 'browser': w = 1100; h = 750; break;
+            case 'ipad': w = 700; h = 940; break; // ~3:4
+            case 'iphone': w = 390; h = 844; break; // Standard iPhone 14
+            case 'none': default: w = 800; h = 800; // Smaller starter liquid
         }
         this.frame.width = w; this.frame.height = h;
-        // Don't draw, setConfig does it
+
+        // Auto-fit to ensure we don't start overflowing
+        this.fitFrameToCanvas();
+    }
+
+    fitFrameToCanvas() {
+        const padding = 100; // Comfortable breathing room
+        const maxWidth = this.canvas.width - padding;
+        const maxHeight = this.canvas.height - padding;
+
+        let scale = 1;
+        if (this.frame.width > maxWidth) scale = Math.min(scale, maxWidth / this.frame.width);
+        if (this.frame.height > maxHeight) scale = Math.min(scale, maxHeight / this.frame.height);
+
+        if (scale < 1) {
+            this.frame.width = Math.round(this.frame.width * scale);
+            this.frame.height = Math.round(this.frame.height * scale);
+        }
+        // Force minimums
+        if (this.frame.width < 200) this.frame.width = 200;
+        if (this.frame.height < 200) this.frame.height = 200;
     }
 
     resetSize() {
         this.setDeviceDefaults(this.config.deviceType);
-        this.updateFramePosition(); // Ensure centered
+        // Orientation handling?
+        const isPortrait = this.config.orientation === 'portrait';
+        const currentIsPortrait = this.frame.width < this.frame.height;
+        if (isPortrait !== currentIsPortrait) {
+            const t = this.frame.width; this.frame.width = this.frame.height; this.frame.height = t;
+            this.fitFrameToCanvas(); // Re-fit after rotation
+        }
+
+        this.updateFramePosition();
         if (this.callbacks.onSizeChange) this.callbacks.onSizeChange(this.frame.width, this.frame.height);
         this.draw();
     }
