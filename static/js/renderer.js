@@ -299,15 +299,15 @@ class CanvasRenderer {
         if (deviceType === 'macbook') {
             shell = 0; // Removed silver edge
             bezel = 24;
-            r = 16;
+            r = 10; // Slightly rounded geometric screen
         } else if (deviceType === 'ipad') {
             shell = 0;
-            bezel = 36;
-            r = 20;
+            bezel = 30; // Slightly thinner bezel than before for better proportion
+            r = 18; // Soft screen corners
         } else if (deviceType === 'iphone') {
             shell = 0;
-            bezel = 20;
-            r = 45;
+            bezel = 20; // Reduced by ~10% (was 22)
+            r = 30; // Reduced from 42 (Outer becomes 50 instead of 62)
         } else if (deviceType === 'browser') {
             // Browser: No bezel, just header
             bezel = 0; shell = 0; r = 10;
@@ -347,7 +347,9 @@ class CanvasRenderer {
             const by = fy - bezel;
             const bw = fw + bezel * 2;
             const bh = fh + bezel * 2;
-            const br = r + (bezel > 0 ? 4 : 0);
+
+            // Perfect Corner Logic: Outer Radius = Inner Radius + Bezel Thickness
+            const br = r + bezel;
 
             // Inner Bezel (Black) - No Detail Shell
             ctx.fillStyle = '#080808';
