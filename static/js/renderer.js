@@ -251,15 +251,15 @@ class CanvasRenderer {
         let r = 0; // Radius of screen content/bezel
 
         if (deviceType === 'macbook') {
-            shell = 12; // Much thicker silver body
-            bezel = 24; // Thicker black bezel
+            shell = 0; // Removed silver edge
+            bezel = 24;
             r = 16;
         } else if (deviceType === 'ipad') {
-            shell = 8;
-            bezel = 36; // Big ipad pro bezel feel
+            shell = 0;
+            bezel = 36;
             r = 20;
         } else if (deviceType === 'iphone') {
-            shell = 8;
+            shell = 0;
             bezel = 20;
             r = 45;
         } else if (deviceType === 'browser') {
@@ -284,7 +284,7 @@ class CanvasRenderer {
             if (deviceType === 'browser') {
                 ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
                 this.roundRect(ctx, fx, fy, fw, fh, r);
-                // Note: we don't fill here because browser header/content fill later. 
+                // Note: we don't fill here because browser header/content fill later.
                 // But to cast shadow we need to fill.
                 ctx.fillStyle = '#fff';
                 ctx.fill();
@@ -297,33 +297,19 @@ class CanvasRenderer {
 
         // 4. Draw Device Body
         if (deviceType !== 'none' && deviceType !== 'browser') {
-            const ox = fx - totalPadding;
-            const oy = fy - totalPadding;
-            const ow = fw + totalPadding * 2;
-            const oh = fh + totalPadding * 2;
-            const or = r + totalPadding / 2;
-
-            // Shell (Silver/Titanium)
-            const grad = ctx.createLinearGradient(ox, oy, ox + ow, oy + oh);
-            grad.addColorStop(0, '#e2e2e4');
-            grad.addColorStop(0.5, '#cececf');
-            grad.addColorStop(1, '#acacae');
-            ctx.fillStyle = grad;
-            this.roundRect(ctx, ox, oy, ow, oh, or);
-            ctx.fill();
-
-            // Inner Bezel (Black)
-            ctx.fillStyle = '#080808';
             const bx = fx - bezel;
             const by = fy - bezel;
             const bw = fw + bezel * 2;
             const bh = fh + bezel * 2;
             const br = r + (bezel > 0 ? 4 : 0);
+
+            // Inner Bezel (Black) - No Detail Shell
+            ctx.fillStyle = '#080808';
             this.roundRect(ctx, bx, by, bw, bh, br);
             ctx.fill();
         }
 
-        // 5. Decorations (Notch, Dynamic Island, Browser Header)
+        // 5. Decorations (Browser Header Only - Notches Removed)
         let contentYOffset = 0;
 
         if (deviceType === 'browser') {
@@ -348,31 +334,8 @@ class CanvasRenderer {
 
             contentYOffset = headerH;
         }
-        else if (deviceType === 'macbook') {
-            // Macbook Notch (Top center)
-            const notchW = 180;
-            const notchH = 32;
-            ctx.fillStyle = '#080808'; // Matches bezel
-            ctx.beginPath();
-            // Rounded bottom corners
-            ctx.moveTo(fx + fw / 2 - notchW / 2, fy);
-            ctx.lineTo(fx + fw / 2 + notchW / 2, fy);
-            ctx.lineTo(fx + fw / 2 + notchW / 2, fy + notchH - 8);
-            ctx.quadraticCurveTo(fx + fw / 2 + notchW / 2, fy + notchH, fx + fw / 2 + notchW / 2 - 8, fy + notchH);
-            ctx.lineTo(fx + fw / 2 - notchW / 2 + 8, fy + notchH);
-            ctx.quadraticCurveTo(fx + fw / 2 - notchW / 2, fy + notchH, fx + fw / 2 - notchW / 2, fy + notchH - 8);
-            ctx.closePath();
-            ctx.fill();
-        }
-        else if (deviceType === 'iphone') {
-            // Dynamic Island
-            const islandW = 130;
-            const islandH = 38;
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.roundRect(fx + fw / 2 - islandW / 2, fy + 16, islandW, islandH, 20);
-            ctx.fill();
-        }
+
+        // (Macbook/iPhone Notches Removed Block used to be here)
 
         // 6. Draw Content
         if (this.content) {
@@ -391,28 +354,7 @@ class CanvasRenderer {
             this.drawContent(ctx, fx, clipY, fw, clipH);
             ctx.restore();
 
-            // Re-draw notch OVER content for Macbook/iPhone to ensure it covers content
-            if (deviceType === 'macbook') {
-                const notchW = 180;
-                const notchH = 32;
-                ctx.fillStyle = '#080808';
-                ctx.beginPath();
-                ctx.moveTo(fx + fw / 2 - notchW / 2, fy);
-                ctx.lineTo(fx + fw / 2 + notchW / 2, fy);
-                ctx.lineTo(fx + fw / 2 + notchW / 2, fy + notchH - 8);
-                ctx.quadraticCurveTo(fx + fw / 2 + notchW / 2, fy + notchH, fx + fw / 2 + notchW / 2 - 8, fy + notchH);
-                ctx.lineTo(fx + fw / 2 - notchW / 2 + 8, fy + notchH);
-                ctx.quadraticCurveTo(fx + fw / 2 - notchW / 2, fy + notchH, fx + fw / 2 - notchW / 2, fy + notchH - 8);
-                ctx.closePath();
-                ctx.fill();
-            } else if (deviceType === 'iphone') {
-                const islandW = 130;
-                const islandH = 38;
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.roundRect(fx + fw / 2 - islandW / 2, fy + 16, islandW, islandH, 20);
-                ctx.fill();
-            }
+            // (Overlaid Notches Removed)
 
         } else {
             // Placeholder
@@ -422,10 +364,10 @@ class CanvasRenderer {
             ctx.fillText("Drop Content Here", fx + fw / 2, fy + fh / 2);
         }
 
-        // 7. Handles
-        if (!this.isPlaying) {
-            this.drawHandles(ctx, fx, fy, fw, fh);
-        }
+        // 7. Handles (Removed Visuals, logic remains in setupInteraction)
+        // if (!this.isPlaying) {
+        //    this.drawHandles(ctx, fx, fy, fw, fh);
+        // }
     }
 
     // ... (drawContent, drawHandles, roundRect, startExport same, just ensure they are included)
