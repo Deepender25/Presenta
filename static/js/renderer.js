@@ -62,6 +62,7 @@ class CanvasRenderer {
                 this.interaction.startY = pos.y;
                 this.interaction.startW = this.frame.width;
                 this.interaction.startH = this.frame.height;
+                this.interaction.startRatio = this.frame.width / this.frame.height; // Capture ratio
                 this.canvas.style.cursor = 'grabbing';
             }
         });
@@ -87,6 +88,13 @@ class CanvasRenderer {
             if (handle.includes('w')) newW -= dx * 2;
             if (handle.includes('s')) newH += dy * 2;
             if (handle.includes('n')) newH -= dy * 2;
+
+            // Aspect Ratio Lock for Corners
+            if (handle.length === 2) {
+                // If it's a corner (nw, ne, sw, se), lock the ratio.
+                // We use the Width as the driver for smoothness
+                newH = newW / this.interaction.startRatio;
+            }
 
             if (newW < 200) newW = 200;
             if (newH < 200) newH = 200;
