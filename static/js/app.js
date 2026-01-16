@@ -366,6 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dot.className = 'timeline-stop fixed';
             dot.style.left = `${pos * 100}%`;
             dot.title = pos === 0 ? "Start (0%)" : "End (100%)";
+
+            // Hover Preview
+            dot.onmouseenter = () => { if (renderer.setScrollRatio) renderer.setScrollRatio(pos); };
+            dot.onmouseleave = () => { if (renderer.clearPreview) renderer.clearPreview(); };
+
             timelineSlider.appendChild(dot);
         });
 
@@ -381,6 +386,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 startDrag(e.clientX, index, dot);
             };
+
+            // Hover Preview
+            dot.onmouseenter = () => { if (renderer.setScrollRatio) renderer.setScrollRatio(stopVal); };
+            dot.onmouseleave = () => { if (renderer.clearPreview) renderer.clearPreview(); };
 
             // Remove on dblclick
             dot.ondblclick = (e) => {
@@ -403,6 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Avoid adding too close to edges
             if (ratio < 0.02 || ratio > 0.98) return;
+
+            // Immediate Preview on Click
+            if (renderer.setScrollRatio) {
+                renderer.setScrollRatio(ratio);
+            }
 
             customStops.push(ratio);
             customStops.sort((a, b) => a - b);

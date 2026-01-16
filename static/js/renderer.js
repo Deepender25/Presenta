@@ -688,6 +688,11 @@ class CanvasRenderer {
         this.draw();
     }
 
+    clearPreview() {
+        this.previewProgress = null;
+        this.draw();
+    }
+
     startExport() {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
         const stream = this.canvas.captureStream(60);
