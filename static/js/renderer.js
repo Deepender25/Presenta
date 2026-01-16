@@ -476,7 +476,12 @@ class CanvasRenderer {
     // ... (drawContent, drawHandles, roundRect, startExport same, just ensure they are included)
     scrollToPreview(progress) {
         this.previewProgress = progress;
-        this.draw();
+        if (!this.previewFrameRequest) {
+            this.previewFrameRequest = requestAnimationFrame(() => {
+                this.draw();
+                this.previewFrameRequest = null;
+            });
+        }
     }
 
     drawContent(ctx, x, y, w, h) {

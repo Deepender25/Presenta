@@ -198,6 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 intervalSettingsEl.classList.add('hidden');
                 customStopsSettingsEl.classList.remove('hidden');
                 renderer.setConfig({ scrollMode: 'human', stops: [...stops] });
+                // Ensure fixed stops are visible immediately
+                renderWithFixed();
             }
         };
 
@@ -222,70 +224,131 @@ document.addEventListener('DOMContentLoaded', () => {
 
         scrollIncrementEl.oninput = updateIntervalStops;
 
-        // 3. Custom Timeline Logic (Vertical)
+        // --- Custom Timeline Logic (Horizontal) ---
 
-        // Click Track to Add Stop
+        // Render with fixed stops
+        const renderWithFixed = () => {
+            stopElements.forEach(el => el.remove());
+            stopElements = [];
+
+            // 1. Render Fixed Start (0%)
+            renderStop(0, true);
+
+            // 2. Render User Stops
+            stops.forEach((ratio, index) => {
+                renderStop(ratio, false, index);
+            });
+
+            // 3. Render Fixed End (100%)
+            renderStop(1, true);
+        };
+
+        const renderStop = (ratio, isFixed, index) => {
+            const dot = document.createElement('div');
+            dot.className = `timeline-stop ${isFixed ? 'fixed' : ''}`;
+            dot.style.left = (ratio * 100) + '%';
+            dot.title = isFixed ? (ratio === 0 ? 'Start' : 'End') : `Stop at ${Math.round(ratio * 100)}%`;
+
+            if (!isFixed) {
+                // Drag Logic
+                dot.onmousedown = (e) => {
+                    e.stopPropagation(); // Prevent adding new stop
+                    startDrag(e, index);
+                };
+
+                // Remove Logic
+                dot.ondblclick = (e) => {
+                    e.stopPropagation();
+                    removeStop(index);
+                };
+            }
+
+            timelineSlider.appendChild(dot);
+            stopElements.push(dot);
+        };
+
+        // Add Stop (Click Track)
         timelineSlider.onclick = (e) => {
             if (animationStyleEl.value !== 'custom') return;
-            // Filter out clicks on dots
-            if (e.target.classList.contains('timeline-stop')) return;
+            if (e.target.classList.contains('timeline-stop')) return; // Ignore clicks on dots
 
             const rect = timelineSlider.getBoundingClientRect();
-            // Vertical: Use Y
-            const y = e.clientY - rect.top;
-            const ratio = Math.max(0, Math.min(1, y / rect.height));
+            const x = e.clientX - rect.left;
+            const ratio = Math.max(0.01, Math.min(0.99, x / rect.width)); // Clamp inside fixed
 
             addStop(ratio);
         };
 
-        // Scrubbing (Mouse Move) - Vertical
-        timelineSlider.onmousemove = (e) => {
-            if (e.buttons === 1) { // dragging
-                const rect = timelineSlider.getBoundingClientRect();
-                const y = e.clientY - rect.top;
-                const ratio = Math.max(0, Math.min(1, y / rect.height));
+        // Dragging Implementation
+        let activeDragIndex = -1;
+        let hasMoved = false;
 
-                timelineThumb.style.top = (ratio * 100) + '%';
-                // Preview on renderer
-                renderer.scrollToPreview(ratio);
+        function startDrag(e, index) {
+            activeDragIndex = index;
+            hasMoved = false;
+            document.body.style.cursor = 'grabbing';
+            window.addEventListener('mousemove', onDragMove);
+            window.addEventListener('mouseup', onDragEnd);
+        }
+
+        function onDragMove(e) {
+            if (activeDragIndex === -1) return;
+            hasMoved = true;
+
+            const rect = timelineSlider.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let ratio = x / rect.width;
+            ratio = Math.max(0.01, Math.min(0.99, ratio)); // Keep between 0 and 1
+
+            stops[activeDragIndex] = ratio;
+
+            // Visual Update (index + 1 because of Fixed Start)
+            const dot = stopElements[activeDragIndex + 1];
+            if (dot) dot.style.left = (ratio * 100) + '%';
+
+            renderer.scrollToPreview(ratio);
+        }
+
+        function onDragEnd(e) {
+            if (activeDragIndex === -1) return;
+
+            document.body.style.cursor = '';
+            window.removeEventListener('mousemove', onDragMove);
+            window.removeEventListener('mouseup', onDragEnd);
+
+            activeDragIndex = -1;
+
+            // Only re-render if we actually moved the stop
+            if (hasMoved) {
+                stops.sort((a, b) => a - b);
+                renderWithFixed();
+                renderer.setConfig({ stops: [...stops] });
             }
-        };
+        }
+
+        function addStop(ratio) {
+            stops.push(ratio);
+            stops.sort((a, b) => a - b);
+            renderWithFixed();
+            renderer.setConfig({ stops: [...stops] });
+        }
+
+        function removeStop(index) {
+            stops.splice(index, 1);
+            renderWithFixed();
+            renderer.setConfig({ stops: [...stops] });
+        }
+
+        // Initialize with default view (just fixed stops if empty)
+        // Check if we are in custom mode to render?
+        // Initial render called if we add a stop or on init?
+        // Let's render once on init if in custom?
+        // Or just wait for interaction. 
+        // We should render fixed stops initially if empty.
+        if (animationStyleEl.value === 'custom') {
+            renderWithFixed();
+        }
     };
-
-    function addStop(ratio) {
-        stops.push(ratio);
-        stops.sort((a, b) => a - b); // Sort numerically
-        renderCustomStops();
-        renderer.setConfig({ stops: [...stops] });
-    }
-
-    function removeStop(index) {
-        stops.splice(index, 1);
-        renderCustomStops();
-        renderer.setConfig({ stops: [...stops] });
-    }
-
-    function renderCustomStops() {
-        // Clear existing stop elements
-        stopElements.forEach(el => el.remove());
-        stopElements = [];
-
-        stops.forEach((ratio, index) => {
-            const dot = document.createElement('div');
-            dot.className = 'timeline-stop';
-            // Vertical positioning
-            dot.style.top = (ratio * 100) + '%';
-            dot.title = `Stop at ${Math.round(ratio * 100)}%`;
-
-            dot.ondblclick = (e) => {
-                e.stopPropagation();
-                removeStop(index);
-            };
-
-            timelineSlider.appendChild(dot);
-            stopElements.push(dot);
-        });
-    }
 
     initAnimationControls();
 
