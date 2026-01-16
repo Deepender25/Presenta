@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Of - Video Mockup Generator</title>
+    <title>Presenta - Video Mockup Generator</title>
     <link rel="stylesheet" href="/static/css/style.css?v=2">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,7 @@
     <body>
         <header>
             <div class="logo">
-                <span>Show</span>Of
+                <span>Presenta</span>
             </div>
         </header>
 
@@ -51,65 +51,109 @@
 
                     <div class="input-wrapper" id="orientation-wrapper">
                         <label>Device Orientation</label>
-                        <div class="toggle-group">
+                        <div class="segmented-control">
                             <button class="toggle-btn active" data-value="portrait" id="btn-portrait">
-                                <span class="icon">📱</span> Portrait
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                </svg>
+                                Portrait
                             </button>
                             <button class="toggle-btn" data-value="landscape" id="btn-landscape">
-                                <span class="icon">💻</span> Landscape
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="12" x2="12.01" y2="12"></line>
+                                </svg>
+                                Landscape
                             </button>
                         </div>
                     </div>
 
-                    <div class="input-wrapper hidden" id="radius-wrapper">
-                        <label>Corner Radius <span id="radius-val">0</span>px</label>
-                        <input type="range" id="corner-radius" min="0" max="100" value="0">
-                    </div>
-
-                    <div class="input-wrapper">
-                        <label>Device Size</label>
-                        <div class="row-inputs">
-                            <div class="col">
-                                <label class="sub-label">WIDTH</label>
-                                <input type="number" id="frame-width" value="1000">
-                            </div>
-                            <div class="col">
-                                <label class="sub-label">HEIGHT</label>
-                                <input type="number" id="frame-height" value="800">
-                            </div>
+                    <div class="input-wrapper collapsible-wrapper hidden" id="radius-wrapper">
+                        <div class="collapsible-header" id="radius-header">
+                            <label style="cursor: pointer;">Corner Radius <span id="radius-val"
+                                    style="color: var(--text-secondary); font-weight: normal; margin-left: 4px;">0</span>px</label>
+                            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                         </div>
-                        <button id="reset-size-btn" class="secondary small-btn">↺ Reset Size</button>
+                        <div class="collapsible-content hidden" id="radius-content">
+                            <input type="range" id="corner-radius" min="0" max="100" value="0">
+                        </div>
                     </div>
 
-                    <div class="input-wrapper">
-                        <label>Scale Content</label>
-                        <select id="resize-mode">
-                            <option value="fit">Fit Width</option>
-                            <option value="fill">Fill (Crop)</option>
-                        </select>
+                    <div class="input-wrapper collapsible-wrapper" id="device-size-wrapper">
+                        <div class="collapsible-header" id="device-size-header">
+                            <label style="cursor: pointer;">Device Size</label>
+                            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="collapsible-content hidden" id="device-size-content">
+                            <div class="row-inputs">
+                                <div class="col">
+                                    <label class="sub-label">WIDTH</label>
+                                    <input type="number" id="frame-width" value="1000">
+                                </div>
+                                <div class="col">
+                                    <label class="sub-label">HEIGHT</label>
+                                    <input type="number" id="frame-height" value="800">
+                                </div>
+                            </div>
+                            <button id="reset-size-btn" class="secondary small-btn full-width">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                                Reset Size
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- Scale Content Removed -->
                 </div>
 
                 <!-- Shadow Settings -->
+                <!-- Shadow Settings -->
                 <div class="control-group">
-                    <h3>Shadow</h3>
-                    <div class="input-wrapper">
-                        <label>Size <span id="shadow-size-val">1.0x</span></label>
-                        <input type="range" id="shadow-size" min="0" max="5" step="0.1" value="1">
+                    <div class="input-wrapper collapsible-wrapper" id="shadow-wrapper">
+                        <div class="collapsible-header active" id="shadow-header">
+                            <label style="cursor: pointer;">Shadow Settings</label>
+                            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="collapsible-content" id="shadow-content">
+                            <div class="input-wrapper">
+                                <label>Size <span id="shadow-size-val">1.0x</span></label>
+                                <input type="range" id="shadow-size" min="0" max="5" step="0.1" value="1">
+                            </div>
+                            <div class="input-wrapper">
+                                <label>Opacity <span id="shadow-opacity-val">1.0x</span></label>
+                                <input type="range" id="shadow-opacity" min="0" max="2" step="0.1" value="1">
+                            </div>
+                        </div>
                     </div>
-                    <div class="input-wrapper">
-                        <label>Opacity <span id="shadow-opacity-val">1.0x</span></label>
-                        <input type="range" id="shadow-opacity" min="0" max="2" step="0.1" value="1">
-                    </div>
-                    <button id="reset-shadow-btn" class="secondary small-btn">↺ Reset Shadows</button>
                 </div>
 
                 <!-- Canvas Settings -->
                 <div class="control-group">
-                    <h3>Canvas</h3>
+                    <h3>Canvas & Background</h3>
                     <div class="input-wrapper">
-                        <label>Aspect Ratio</label>
-                        <select id="aspect-ratio">
+                        <label>Canvas Aspect Ratio</label>
+                        <div class="segmented-control" id="aspect-ratio-group">
+                            <button class="toggle-btn" data-value="1:1">1:1</button>
+                            <button class="toggle-btn active" data-value="16:9">16:9</button>
+                            <button class="toggle-btn" data-value="9:16">9:16</button>
+                        </div>
+                        <!-- Hidden select for compatibility if needed, but we will update JS to use buttons -->
+                        <select id="aspect-ratio" class="hidden">
                             <option value="16:9" selected>16:9 (Landscape)</option>
                             <option value="1:1">1:1 (Square)</option>
                             <option value="9:16">9:16 (Portrait)</option>
@@ -118,7 +162,10 @@
                     </div>
                     <div class="input-wrapper">
                         <label>Background Color</label>
-                        <input type="color" id="bg-color" value="#ECECEC">
+                        <div class="color-input-row">
+                            <input type="color" id="bg-color" value="#ECECEC">
+                            <span id="bg-color-hex" class="color-hex">#ECECEC</span>
+                        </div>
                     </div>
                 </div>
 
@@ -127,10 +174,10 @@
                     <h3>Animation Settings</h3>
 
                     <div class="input-wrapper">
-                        <label>Animation Style</label>
+                        <label>Scroll Behavior</label>
                         <select id="animation-style">
                             <option value="linear">Linear Smooth (Constant)</option>
-                            <option value="interval">Runner Step (Interval Paused)</option>
+                            <option value="interval">Human Step (Natural Pauses)</option>
                             <option value="custom">Custom Stops (Precision)</option>
                         </select>
                     </div>
@@ -143,7 +190,7 @@
 
                     <!-- Custom Stops Settings -->
                     <div class="input-wrapper hidden" id="custom-stops-settings">
-                        <label>Keyframes (Double click to remove)</label>
+                        <label>Keyframes <span class="sub-text">(Double click to remove)</span></label>
                         <div class="timeline-slider horizontal" id="timeline-slider">
                             <div class="timeline-track"></div>
                             <div class="timeline-progress" id="timeline-progress"></div>
@@ -155,19 +202,46 @@
                     <div class="input-wrapper">
                         <label>Start Hold Time: <span id="hold-start-val">1s</span></label>
                         <input type="range" id="hold-start" value="1" min="0" max="10" step="0.5">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Total Duration: <span id="duration-val">5s</span></label>
+                        <input type="range" id="duration" min="1" max="60" value="5">
+                    </div>
+                </div>
 
-                        <div class="input-wrapper">
-                            <label>Total Duration: <span id="duration-val">5s</span></label>
-                            <input type="range" id="duration" min="1" max="60" value="5">
+                <!-- Export -->
+                <div class="control-group">
+                    <h3>Export Settings</h3>
+                    <div class="row-inputs">
+                        <div class="col">
+                            <label class="sub-label">Quality</label>
+                            <select id="export-quality">
+                                <option>4K (UHD)</option>
+                                <option>1080p (FHD)</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label class="sub-label">Format</label>
+                            <select id="export-format">
+                                <option>MP4</option>
+                                <option>WEBM</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- Export -->
-                    <div class="control-group">
-                        <h3>Export</h3>
-                        <button id="play-btn">Preview Animation</button>
-                        <button id="export-btn" class="secondary">Export Video</button>
-                    </div>
+                    <button id="play-btn" class="outline-btn">
+                        <span class="btn-text">Preview Animation</span>
+                    </button>
+                    <button id="export-btn" class="primary-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export Video
+                    </button>
+                </div>
             </aside>
 
             <section class="preview-area">

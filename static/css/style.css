@@ -1,12 +1,15 @@
 :root {
-    --bg-primary: #09090b;
-    --bg-secondary: #18181b;
-    --bg-tertiary: #27272a;
-    --text-primary: #f4f4f5;
-    --text-secondary: #a1a1aa;
+    /* Light Theme Palette */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f4f4f5;
+    /* Sidebar/Inputs */
+    --bg-tertiary: #e4e4e7;
+    /* Borders/Secondary Elements */
+    --text-primary: #18181b;
+    --text-secondary: #71717a;
     --accent: #3b82f6;
     --accent-hover: #2563eb;
-    --border: #3f3f46;
+    --border: #e4e4e7;
     --radius: 0.5rem;
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -59,7 +62,8 @@ main {
 /* Sidebar */
 aside {
     width: 320px;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
+    /* White sidebar */
     border-right: 1px solid var(--border);
     padding: 1rem;
     overflow-y: auto;
@@ -102,14 +106,70 @@ label {
 }
 
 input[type="range"] {
+    -webkit-appearance: none;
     width: 100%;
-    accent-color: var(--accent);
+    background: transparent;
+    cursor: pointer;
+    margin: 0.5rem 0;
+}
+
+input[type="range"]:focus {
+    outline: none;
+}
+
+/* WebPy Track */
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: #e4e4e7;
+    /* Light Gray Track */
+    border-radius: 2px;
+}
+
+/* WebKit Thumb */
+input[type="range"]::-webkit-slider-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #18181b;
+    /* Dark Thumb */
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -6px;
+    /* Center thumb on track (4px track - 16px thumb / 2) */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+/* Firefox Track */
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: #e4e4e7;
+    border-radius: 2px;
+}
+
+/* Firefox Thumb */
+input[type="range"]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border: none;
+    border-radius: 50%;
+    background: #18181b;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 select,
 input[type="text"],
 input[type="number"] {
-    background-color: var(--bg-tertiary);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 0.5rem;
@@ -152,36 +212,82 @@ button.small-btn {
     font-size: 0.8rem;
 }
 
-/* Toggle Group (Portrait/Landscape) */
-.toggle-group {
+/* Segmented Control */
+.segmented-control {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.25rem;
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
-.toggle-btn {
+.segmented-control .toggle-btn {
     flex: 1;
-    background-color: var(--bg-tertiary);
+    background-color: transparent;
     color: var(--text-secondary);
-    padding: 0.5rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
+    padding: 0.4rem;
+    border-radius: 4px;
     font-size: 0.85rem;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.4rem;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
-.toggle-btn.active {
-    background-color: var(--bg-tertiary);
-    /* Keep dark just border highlight? or fill? */
-    border-color: var(--accent);
+.segmented-control .toggle-btn:hover {
     color: var(--text-primary);
+    background-color: rgba(0, 0, 0, 0.03);
 }
 
-.toggle-btn .icon {
-    font-size: 1rem;
+.segmented-control .toggle-btn.active {
+    background-color: #fff;
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-color: transparent;
+}
+
+/* Color Input Row */
+.color-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--bg-secondary);
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-hex {
+    font-size: 0.85rem;
+    font-family: monospace;
+    color: var(--text-primary);
 }
 
 /* Row Inputs (Width / Height) */
@@ -200,17 +306,55 @@ button.small-btn {
 .preview-area {
     flex: 1;
     background-color: #121212;
+    /* Keep dark */
     background-image:
         radial-gradient(circle at 1px 1px, #27272a 1px, transparent 0);
+    /* Keep dark dots */
     background-size: 24px 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    /* Important for absolute canvas positioning if needed later, but flex centers it now */
     padding: 2rem;
     overflow: hidden;
-    /* Prevent scrollbars from canvas dragging */
+}
+
+/* Collapsible */
+.collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Push chevron to right */
+    width: 100%;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    user-select: none;
+}
+
+.collapsible-header:hover label {
+    color: var(--text-primary);
+}
+
+.collapsible-header .chevron-icon {
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+}
+
+.collapsible-header.active .chevron-icon {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    margin-top: 0.25rem;
+    padding-left: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    /* Gap between inputs and reset button */
+}
+
+.collapsible-content.hidden {
+    display: none;
 }
 
 canvas {
@@ -238,6 +382,8 @@ canvas:active {
 .file-drop-zone:hover {
     border-color: var(--accent);
 }
+
+/* Duplicate styles removed */
 
 /* Utility */
 .hidden {
