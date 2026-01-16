@@ -14,6 +14,9 @@ class CanvasRenderer {
             resizeMode: 'fit',
             duration: 5,
             holdStart: 1,
+            scrollMode: 'human', // 'continuous' or 'human'
+            stops: [], // Array of ratios 0-1
+            holdStop: 1, // Duration to hold at each stop
             cornerRadius: 0,
             fps: 60,
             shadowSize: 1,
@@ -276,13 +279,21 @@ class CanvasRenderer {
     timestamp() { return window.performance.now(); }
     play(cb) {
         if (this.isPlaying) return;
+        this.previewProgress = null; // Clear preview
         this.isPlaying = true; this.startTime = null; this.lastFrameTime = this.timestamp();
         const loop = (now) => {
             if (!this.isPlaying) return;
             if (!this.startTime) this.startTime = now;
             const elapsed = (now - this.startTime) / 1000;
             this.currentTime = elapsed;
-            const totalDuration = this.config.holdStart + this.config.duration + 2;
+
+            // Calculate total duration based on stops if in human mode
+            let totalDuration = this.config.holdStart + this.config.duration;
+            if (this.config.scrollMode === 'human' && this.config.stops.length > 0) {
+                totalDuration += this.config.stops.length * this.config.holdStop;
+            }
+            totalDuration += 2; // Buffer
+
             if (this.currentTime > totalDuration) { this.stop(); if (cb) cb(); return; }
             this.draw();
             if (this.contentType === 'video') this.content.currentTime = this.currentTime % this.content.duration;
@@ -290,7 +301,7 @@ class CanvasRenderer {
         };
         this.animationId = requestAnimationFrame(loop);
     }
-    stop() { this.isPlaying = false; cancelAnimationFrame(this.animationId); this.currentTime = 0; this.draw(); }
+    stop() { this.isPlaying = false; cancelAnimationFrame(this.animationId); this.currentTime = 0; this.previewProgress = null; this.draw(); }
 
     // --- Drawing ---
     draw() {
@@ -463,6 +474,11 @@ class CanvasRenderer {
     }
 
     // ... (drawContent, drawHandles, roundRect, startExport same, just ensure they are included)
+    scrollToPreview(progress) {
+        this.previewProgress = progress;
+        this.draw();
+    }
+
     drawContent(ctx, x, y, w, h) {
         let scrollY = 0;
         if (this.contentType === 'image') {
@@ -480,11 +496,32 @@ class CanvasRenderer {
             }
             const maxScroll = drawH - h;
             if (maxScroll > 0) {
-                let t = this.currentTime - holdStart;
-                if (t < 0) t = 0;
-                let progress = t / duration;
-                if (progress > 1) progress = 1;
-                progress = progress * progress * (3 - 2 * progress);
+                let progress = 0;
+
+                if (this.previewProgress !== undefined && this.previewProgress !== null) {
+                    progress = this.previewProgress;
+                } else {
+                    let t = this.currentTime - holdStart;
+                    if (t < 0) t = 0;
+
+                    // Support 'human' with stops. 'linear' or 'continuous' ignores stops.
+                    if (this.config.scrollMode === 'human' && this.config.stops.length > 0) {
+                        progress = this.calculateSegmentedProgress(t);
+                    } else {
+                        // Linear/Continuous Mode
+                        progress = t / duration;
+                        if (progress > 1) progress = 1;
+
+                        // Default ease for 'continuous' look
+                        // If user strictly wants 'linear' (constant speed), we could change this.
+                        // "Linear Smooth (Constant)" text.
+                        // Let's use linear if explicitly set to a 'linear' strict mode? 
+                        // But usually "Smooth" implies ease.
+                        // Let's stick to Ease-In-Out for aesthetic unless requested otherwise.
+                        progress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+                    }
+                }
+
                 scrollY = progress * maxScroll;
             }
             let offsetX = 0;
@@ -534,6 +571,72 @@ class CanvasRenderer {
         ctx.quadraticCurveTo(x, y, x + r.tl, y);
         ctx.closePath();
     }
+    easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
+
+    calculateSegmentedProgress(timeElapsed) {
+        // Prepare segments: 0 -> stop1 -> stop2 -> ... -> 1
+        // We need to distribute the main 'duration' across the movement segments proportional to distance.
+        // And inject 'holdStop' duration at each stop.
+
+        const stops = [0, ...this.config.stops.sort((a, b) => a - b), 1];
+        const moves = [];
+
+        let totalDistance = 1;
+        // Logic: Total movement time is this.config.duration.
+        // We allocate that time to segments based on distance coverage.
+
+        for (let i = 0; i < stops.length - 1; i++) {
+            const startStr = stops[i];
+            const endStr = stops[i + 1];
+            const dist = endStr - startStr;
+            const moveTime = dist * this.config.duration;
+            moves.push({
+                type: 'move',
+                start: startStr,
+                end: endStr,
+                duration: moveTime
+            });
+            // Add hold after move, unless it's the last one (scrolled to bottom)
+            // Actually, usually we don't hold at the very end (100%), we just finish?
+            // The prompt says "stop every quarter...".
+            // If we have a stop at 100%, we hold there. If 1 is added automatically, we might not want to hold?
+            // Let's assume stops added by user are strictly < 1. 
+            // If user adds 0.25, 0.5, 0.75.
+            // 0 -> 0.25 (Move) -> Hold -> 0.25 -> 0.5 (Move) -> Hold...
+
+            // The 'stops' array includes 1 at the end.
+            // If i < stops.length - 2, it means endStr is a user-defined stop (or 0 if user defined 0?).
+            // Let's check if endStr is < 1 to decide if we hold.
+            if (endStr < 1) {
+                moves.push({
+                    type: 'hold',
+                    val: endStr,
+                    duration: this.config.holdStop
+                });
+            }
+        }
+
+        // Now walk through time
+        let localTime = timeElapsed;
+        for (const segment of moves) {
+            if (localTime <= segment.duration) {
+                if (segment.type === 'hold') {
+                    return segment.val;
+                } else {
+                    // Move
+                    const p = localTime / segment.duration;
+                    const eased = this.easeInOutQuad(p);
+                    return segment.start + (segment.end - segment.start) * eased;
+                }
+            }
+            localTime -= segment.duration;
+        }
+
+        return 1; // Finished
+    }
+
     startExport() {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
         const stream = this.canvas.captureStream(60);

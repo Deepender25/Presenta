@@ -148,7 +148,148 @@ document.addEventListener('DOMContentLoaded', () => {
         renderer.setConfig({ duration: Number(e.target.value) });
     };
 
-    holdStartEl.oninput = (e) => renderer.setConfig({ holdStart: Number(e.target.value) });
+    holdStartEl.oninput = (e) => {
+        document.getElementById('hold-start-val').textContent = `${e.target.value}s`;
+        renderer.setConfig({ holdStart: Number(e.target.value) });
+    };
+
+    // --- New Animation Controls ---
+    const animationStyleEl = document.getElementById('animation-style');
+    const intervalSettingsEl = document.getElementById('interval-settings');
+    const customStopsSettingsEl = document.getElementById('custom-stops-settings');
+    const scrollIncrementEl = document.getElementById('scroll-increment');
+    const incrementValEl = document.getElementById('increment-val');
+
+    // Timeline Refs
+    const timelineSlider = document.getElementById('timeline-slider');
+    const timelineThumb = document.getElementById('timeline-thumb');
+
+    // State
+    let stops = [];
+    let stopElements = [];
+
+    // Init
+    const initAnimationControls = () => {
+
+        // 1. Style Selection
+        const updateStyle = () => {
+            const style = animationStyleEl.value;
+            // Config Map
+            // linear -> scrollMode: 'continuous'
+            // interval -> scrollMode: 'interval' (needs implementation in renderer or just reuse human+calculated stops)
+            // custom -> scrollMode: 'human' + custom stops
+
+            // Renderer Mapping
+            // We'll reuse 'human' mode for both Interval and Custom, just handling stops generation differently.
+            // Or add explicit modes to renderer for clarity.
+            // Let's pass the style directly as 'scrollMode' if we update renderer to match.
+            // Or map here.
+
+            if (style === 'linear') {
+                intervalSettingsEl.classList.add('hidden');
+                customStopsSettingsEl.classList.add('hidden');
+                renderer.setConfig({ scrollMode: 'linear', stops: [] });
+            } else if (style === 'interval') {
+                intervalSettingsEl.classList.remove('hidden');
+                customStopsSettingsEl.classList.add('hidden');
+                updateIntervalStops(); // Calculate stops
+                renderer.setConfig({ scrollMode: 'human' }); // Use segmented logic
+            } else if (style === 'custom') {
+                intervalSettingsEl.classList.add('hidden');
+                customStopsSettingsEl.classList.remove('hidden');
+                renderer.setConfig({ scrollMode: 'human', stops: [...stops] });
+            }
+        };
+
+        animationStyleEl.onchange = updateStyle;
+
+        // 2. Interval Logic
+        const updateIntervalStops = () => {
+            if (animationStyleEl.value !== 'interval') return;
+            const pct = Number(scrollIncrementEl.value);
+            incrementValEl.textContent = `${pct}%`;
+
+            // Calculate stops: e.g. 25 -> 0.25, 0.50, 0.75
+            // 100 / 25 = 4 segments -> 3 stops.
+            const newStops = [];
+            let current = pct;
+            while (current < 100) {
+                newStops.push(current / 100);
+                current += pct;
+            }
+            renderer.setConfig({ stops: newStops });
+        };
+
+        scrollIncrementEl.oninput = updateIntervalStops;
+
+        // 3. Custom Timeline Logic (Vertical)
+
+        // Click Track to Add Stop
+        timelineSlider.onclick = (e) => {
+            if (animationStyleEl.value !== 'custom') return;
+            // Filter out clicks on dots
+            if (e.target.classList.contains('timeline-stop')) return;
+
+            const rect = timelineSlider.getBoundingClientRect();
+            // Vertical: Use Y
+            const y = e.clientY - rect.top;
+            const ratio = Math.max(0, Math.min(1, y / rect.height));
+
+            addStop(ratio);
+        };
+
+        // Scrubbing (Mouse Move) - Vertical
+        timelineSlider.onmousemove = (e) => {
+            if (e.buttons === 1) { // dragging
+                const rect = timelineSlider.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const ratio = Math.max(0, Math.min(1, y / rect.height));
+
+                timelineThumb.style.top = (ratio * 100) + '%';
+                // Preview on renderer
+                renderer.scrollToPreview(ratio);
+            }
+        };
+    };
+
+    function addStop(ratio) {
+        stops.push(ratio);
+        stops.sort((a, b) => a - b); // Sort numerically
+        renderCustomStops();
+        renderer.setConfig({ stops: [...stops] });
+    }
+
+    function removeStop(index) {
+        stops.splice(index, 1);
+        renderCustomStops();
+        renderer.setConfig({ stops: [...stops] });
+    }
+
+    function renderCustomStops() {
+        // Clear existing stop elements
+        stopElements.forEach(el => el.remove());
+        stopElements = [];
+
+        stops.forEach((ratio, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'timeline-stop';
+            // Vertical positioning
+            dot.style.top = (ratio * 100) + '%';
+            dot.title = `Stop at ${Math.round(ratio * 100)}%`;
+
+            dot.ondblclick = (e) => {
+                e.stopPropagation();
+                removeStop(index);
+            };
+
+            timelineSlider.appendChild(dot);
+            stopElements.push(dot);
+        });
+    }
+
+    initAnimationControls();
+
+
 
     // Shadow Settings
     shadowSizeEl.oninput = (e) => {

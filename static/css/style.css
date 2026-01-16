@@ -243,3 +243,93 @@ canvas:active {
 .hidden {
     display: none !important;
 }
+
+/* Timeline Slider (Vertical) */
+.timeline-container-vertical {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    height: 200px;
+    background-color: var(--bg-tertiary);
+    /* Container bg for contrast */
+    padding: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.timeline-slider.vertical {
+    position: relative;
+    width: 24px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0;
+}
+
+.timeline-slider.vertical .timeline-track {
+    position: absolute;
+    height: 100%;
+    width: 4px;
+    /* Vertical Bar */
+    background-color: #52525b;
+    /* Dark grey track */
+    border-radius: 2px;
+    top: 0;
+}
+
+.timeline-slider.vertical .timeline-progress {
+    position: absolute;
+    width: 4px;
+    background-color: var(--accent);
+    border-radius: 2px;
+    height: 0%;
+    /* Dynamic Height */
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.timeline-slider.vertical .timeline-thumb {
+    position: absolute;
+    width: 16px;
+    height: 12px;
+    background-color: #fff;
+    border-radius: 2px;
+    top: 0%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.timeline-slider.vertical .timeline-stop {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: var(--bg-primary);
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    /* Dots */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.timeline-slider.vertical .timeline-stop:hover {
+    transform: translate(-50%, -50%) scale(1.3);
+    background-color: var(--accent);
+    border-color: #fff;
+}
+
+.help-text.side {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    line-height: 1.4;
+    margin-top: 0;
+}
