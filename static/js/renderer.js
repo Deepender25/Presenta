@@ -320,7 +320,7 @@ class CanvasRenderer {
 
         if (deviceType === 'macbook') {
             shell = 0; // Removed silver edge
-            bezel = 24;
+            bezel = 18; // Reduced 25% (was 24)
             r = 10; // Slightly rounded geometric screen
         } else if (deviceType === 'ipad') {
             shell = 0;
@@ -457,7 +457,24 @@ class CanvasRenderer {
             this.drawContent(ctx, fx, clipY, fw, clipH);
             ctx.restore();
 
-            // (Overlaid Notches Removed)
+            // Overlay: Notch for MacBook
+            // Overlay: Notch for MacBook
+            if (deviceType === 'macbook') {
+                // Proportional sizing
+                const notchW = Math.round(fw * 0.11); // ~11% of screen width (Reduced)
+                const notchH = Math.round(notchW * 0.19); // Aspect ratio for notch ~ 5.2:1
+
+                const notchX = fx + (fw - notchW) / 2;
+                const notchY = fy; // Top edge
+
+                // Radii proportional or clamped
+                const rVal = Math.max(4, notchH * 0.3);
+                const notchR = { tl: 0, tr: 0, bl: rVal, br: rVal };
+
+                ctx.fillStyle = '#080808'; // Match bezel
+                this.roundRect(ctx, notchX, notchY, notchW, notchH, notchR);
+                ctx.fill();
+            }
 
         } else {
             // Placeholder
