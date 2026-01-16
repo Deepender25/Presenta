@@ -455,27 +455,38 @@ canvas:active {
 
 .timeline-slider.horizontal .timeline-stop {
     position: absolute;
-    width: 14px;
-    height: 14px;
-    background-color: var(--bg-primary);
-    border: 2px solid var(--accent);
-    border-radius: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    z-index: 2;
-    cursor: grab;
-    transition: transform 0.1s, border-color 0.1s;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 10;
+    transition: transform 0.1s, background-color 0.2s;
 }
 
-.timeline-slider.horizontal .timeline-stop:hover {
-    transform: translate(-50%, -50%) scale(1.2);
-    border-color: var(--text-primary);
+.timeline-stop.fixed {
+    background-color: var(--text-secondary);
+    opacity: 0.5;
+    pointer-events: none;
+    width: 8px;
+    height: 8px;
+    z-index: 5;
 }
 
-.timeline-slider.horizontal .timeline-stop:active {
-    cursor: grabbing;
-    transform: translate(-50%, -50%) scale(1.2);
+.timeline-stop.custom {
     background-color: var(--accent);
+    cursor: grab;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-stop.custom:active {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.timeline-stop.custom:hover {
+    transform: translate(-50%, -50%) scale(1.2);
 }
 
 /* Fixed Stops (Start/End) */

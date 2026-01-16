@@ -291,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
             intervalSettings.classList.add('hidden');
             customStopsSettings.classList.remove('hidden');
             renderer.setConfig({ scrollMode: 'human', stops: customStops });
+            renderTimeline(); // Force render fixed stops
         }
     };
 
@@ -314,16 +315,72 @@ document.addEventListener('DOMContentLoaded', () => {
     animationStyleEl.dispatchEvent(new Event('change'));
 
     // Custom Timeline Logic
+    // Drag Helper
+    // Drag Helper
+    const startDrag = (initialX, index, dot) => {
+        const rect = timelineSlider.getBoundingClientRect();
+        let hasMoved = false;
+
+        const onMove = (moveEvent) => {
+            const dx = Math.abs(moveEvent.clientX - initialX);
+            if (dx > 2) hasMoved = true; // Threshold for movement
+
+            let newRatio = (moveEvent.clientX - rect.left) / rect.width;
+            if (newRatio < 0.01) newRatio = 0.01;
+            if (newRatio > 0.99) newRatio = 0.99;
+
+            customStops[index] = newRatio;
+            dot.style.left = `${newRatio * 100}%`;
+            dot.title = `Stop at ${Math.round(newRatio * 100)}%`;
+
+            // LIVE PREVIEW
+            if (renderer.setScrollRatio) {
+                renderer.setScrollRatio(newRatio);
+            }
+        };
+
+        const onUp = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+
+            // Only re-render if actually moved, to preserve DOM for DoubleClick
+            if (hasMoved) {
+                customStops.sort((a, b) => a - b);
+                renderTimeline();
+                renderer.setConfig({ stops: customStops });
+            }
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
     const renderTimeline = () => {
         // Clear existing stops (dots) - keep track/progress
         const existingDots = timelineSlider.querySelectorAll('.timeline-stop');
         existingDots.forEach(d => d.remove());
 
+        // Render Fixed Stops (0% and 100%)
+        [0, 1].forEach(pos => {
+            const dot = document.createElement('div');
+            dot.className = 'timeline-stop fixed';
+            dot.style.left = `${pos * 100}%`;
+            dot.title = pos === 0 ? "Start (0%)" : "End (100%)";
+            timelineSlider.appendChild(dot);
+        });
+
+        // Render Custom Stops
         customStops.forEach((stopVal, index) => {
             const dot = document.createElement('div');
-            dot.className = 'timeline-stop';
+            dot.className = 'timeline-stop custom';
             dot.style.left = `${stopVal * 100}%`;
-            dot.title = `Stop at ${Math.round(stopVal * 100)}% (Double click to remove)`;
+            dot.title = `Stop at ${Math.round(stopVal * 100)}% (Drag to move, DblClick to remove)`;
+
+            // Drag Logic
+            dot.onmousedown = (e) => {
+                e.stopPropagation();
+                startDrag(e.clientX, index, dot);
+            };
 
             // Remove on dblclick
             dot.ondblclick = (e) => {
@@ -337,19 +394,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    timelineSlider.onclick = (e) => {
-        // Add stop if clicked on track (not on dot)
-        if (e.target.classList.contains('timeline-track') || e.target === timelineSlider) {
+    timelineSlider.onmousedown = (e) => {
+        // Add stop if clicked on track (not on an existing dot)
+        if (!e.target.classList.contains('timeline-stop')) {
             const rect = timelineSlider.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             let ratio = clickX / rect.width;
-            if (ratio < 0.05) ratio = 0.05; // clamp
-            if (ratio > 0.95) ratio = 0.95;
+
+            // Avoid adding too close to edges
+            if (ratio < 0.02 || ratio > 0.98) return;
 
             customStops.push(ratio);
             customStops.sort((a, b) => a - b);
+
             renderTimeline();
             renderer.setConfig({ stops: customStops });
+
+            // Immediately drag new point
+            const newIndex = customStops.indexOf(ratio);
+            const customDots = timelineSlider.querySelectorAll('.timeline-stop.custom');
+            const dot = customDots[newIndex];
+            if (dot) {
+                // Pass current mouse position to startDrag
+                startDrag(e.clientX, newIndex, dot);
+            }
         }
     };
 

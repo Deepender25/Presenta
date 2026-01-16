@@ -681,6 +681,13 @@ class CanvasRenderer {
         return 1; // Finished
     }
 
+    setScrollRatio(ratio) {
+        if (!this.content) return;
+        // Use the existing logic in drawContent which checks previewProgress
+        this.previewProgress = Math.max(0, Math.min(1, ratio));
+        this.draw();
+    }
+
     startExport() {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
         const stream = this.canvas.captureStream(60);
