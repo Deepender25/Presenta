@@ -19,8 +19,10 @@ class CanvasRenderer {
             holdStop: 1, // Duration to hold at each stop
             cornerRadius: 0,
             fps: 60,
+            fps: 60,
             shadowSize: 1,
-            shadowOpacity: 1
+            shadowOpacity: 1,
+            bgImage: null // Image Object or null
         };
 
         // Frame State
@@ -310,8 +312,28 @@ class CanvasRenderer {
         const ctx = this.ctx;
 
         // 1. Background
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.config.bgImage) {
+            const img = this.config.bgImage;
+            // Cover logic
+            const ratio = img.naturalWidth / img.naturalHeight;
+            const canvasRatio = this.canvas.width / this.canvas.height;
+            let dw = this.canvas.width;
+            let dh = this.canvas.height;
+
+            if (ratio > canvasRatio) {
+                dw = dh * ratio; // Too wide, fit height, crop width
+            } else {
+                dh = dw / ratio; // Too tall, fit width, crop height
+            }
+
+            const dx = (this.canvas.width - dw) / 2;
+            const dy = (this.canvas.height - dh) / 2;
+
+            ctx.drawImage(img, dx, dy, dw, dh);
+        } else {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
 
         // 2. Setup Device Parameters
         let bezel = 0; // The black border

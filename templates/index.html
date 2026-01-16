@@ -122,14 +122,14 @@
                 <!-- Shadow Settings -->
                 <div class="control-group">
                     <div class="input-wrapper collapsible-wrapper" id="shadow-wrapper">
-                        <div class="collapsible-header active" id="shadow-header">
+                        <div class="collapsible-header" id="shadow-header">
                             <label style="cursor: pointer;">Shadow Settings</label>
                             <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </div>
-                        <div class="collapsible-content" id="shadow-content">
+                        <div class="collapsible-content hidden" id="shadow-content">
                             <div class="input-wrapper">
                                 <label>Size <span id="shadow-size-val">1.0x</span></label>
                                 <input type="range" id="shadow-size" min="0" max="5" step="0.1" value="1">
@@ -152,7 +152,6 @@
                             <button class="toggle-btn active" data-value="16:9">16:9</button>
                             <button class="toggle-btn" data-value="9:16">9:16</button>
                         </div>
-                        <!-- Hidden select for compatibility if needed, but we will update JS to use buttons -->
                         <select id="aspect-ratio" class="hidden">
                             <option value="16:9" selected>16:9 (Landscape)</option>
                             <option value="1:1">1:1 (Square)</option>
@@ -160,11 +159,46 @@
                             <option value="4:3">4:3</option>
                         </select>
                     </div>
+
+                    <!-- Background Color -->
                     <div class="input-wrapper">
                         <label>Background Color</label>
                         <div class="color-input-row">
                             <input type="color" id="bg-color" value="#ECECEC">
-                            <span id="bg-color-hex" class="color-hex">#ECECEC</span>
+                            <input type="text" id="bg-color-text" value="#ECECEC" spellcheck="false" maxlength="7">
+                            <button id="bg-color-reset-btn" class="icon-btn" title="Reset Color">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Background Image -->
+                    <div class="input-wrapper">
+                        <label>Background Image (Optional)</label>
+                        <div class="row-inputs" style="gap: 0.5rem;">
+                            <div class="file-upload-btn" id="bg-image-upload-btn">
+                                <span id="bg-image-filename">Upload Image...</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <input type="file" id="bg-image-input" accept="image/*" class="hidden">
+                            </div>
+                            <button id="bg-image-remove-btn" class="icon-btn danger">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                    </path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -176,27 +210,41 @@
                     <div class="input-wrapper">
                         <label>Scroll Behavior</label>
                         <select id="animation-style">
+                            <option value="human">Human Step (Natural Pauses)</option>
                             <option value="linear">Linear Smooth (Constant)</option>
-                            <option value="interval">Human Step (Natural Pauses)</option>
-                            <option value="custom">Custom Stops (Precision)</option>
                         </select>
                     </div>
 
-                    <!-- Interval Settings -->
-                    <div class="input-wrapper hidden" id="interval-settings">
-                        <label>Scroll Increment: <span id="increment-val">25%</span></label>
-                        <input type="range" id="scroll-increment" min="10" max="100" step="5" value="25">
-                    </div>
-
-                    <!-- Custom Stops Settings -->
-                    <div class="input-wrapper hidden" id="custom-stops-settings">
-                        <label>Keyframes <span class="sub-text">(Double click to remove)</span></label>
-                        <div class="timeline-slider horizontal" id="timeline-slider">
-                            <div class="timeline-track"></div>
-                            <div class="timeline-progress" id="timeline-progress"></div>
-                            <!-- Stops here -->
+                    <!-- Human Settings Sub-options -->
+                    <div id="human-settings-container">
+                        <div class="input-wrapper">
+                            <div class="segmented-control" id="human-mode-group">
+                                <button class="toggle-btn active" data-value="fixed">Fixed %</button>
+                                <button class="toggle-btn" data-value="custom">Custom Stops</button>
+                            </div>
                         </div>
-                        <div class="help-text">Drag to preview. Click to add.</div>
+
+                        <!-- Interval Settings -->
+                        <div class="input-wrapper" id="interval-settings">
+                            <label>Scroll Increment: <span id="increment-val">25%</span></label>
+                            <input type="range" id="scroll-increment" min="10" max="100" step="5" value="25">
+                            <div class="help-text"
+                                style="display: flex; justify-content: space-between; margin-top: 0;">
+                                <span>10%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Custom Stops Settings -->
+                        <div class="input-wrapper hidden" id="custom-stops-settings">
+                            <!-- <label>Keyframes <span class="sub-text">(Double click to remove)</span></label> -->
+                            <div class="timeline-slider horizontal" id="timeline-slider">
+                                <div class="timeline-track"></div>
+                                <div class="timeline-progress" id="timeline-progress"></div>
+                                <!-- Stops here -->
+                            </div>
+                            <div class="help-text">Click to add. Double-click to remove.</div>
+                        </div>
                     </div>
 
                     <div class="input-wrapper">

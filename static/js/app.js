@@ -158,13 +158,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check if bgColorEl exists (it should)
-    if (bgColorEl) {
+    const bgColorText = document.getElementById('bg-color-text');
+    if (bgColorEl && bgColorText) {
+        // Picker -> Text & Renderer
         bgColorEl.oninput = (e) => {
-            renderer.setConfig({ bgColor: e.target.value });
-            const hexSpan = document.getElementById('bg-color-hex');
-            if (hexSpan) hexSpan.textContent = e.target.value;
+            const val = e.target.value.toUpperCase();
+            renderer.setConfig({ bgColor: val });
+            bgColorText.value = val;
         };
+
+        // Text -> Picker & Renderer
+        bgColorText.oninput = (e) => {
+            let val = e.target.value;
+            // Enforce # prefix
+            if (!val.startsWith('#')) {
+                val = '#' + val;
+                e.target.value = val;
+            }
+
+            // simple hex regex check
+            if (/^#[0-9A-F]{6}$/i.test(val)) {
+                renderer.setConfig({ bgColor: val });
+                bgColorEl.value = val;
+            }
+        };
+
+        // Blur to format
+        bgColorText.onblur = (e) => {
+            let val = e.target.value;
+            // If valid hex, ensure formatted
+            if (!val.startsWith('#')) val = '#' + val;
+            if (/^#[0-9A-F]{6}$/i.test(val)) {
+                e.target.value = val.toUpperCase();
+            } else {
+                // Revert to picker value if invalid
+                e.target.value = bgColorEl.value.toUpperCase();
+            }
+        };
+
+        // Reset Button
+        const bgColorResetBtn = document.getElementById('bg-color-reset-btn');
+        if (bgColorResetBtn) {
+            bgColorResetBtn.onclick = () => {
+                const defaultColor = '#ECECEC';
+                renderer.setConfig({ bgColor: defaultColor });
+                bgColorEl.value = defaultColor;
+                bgColorText.value = defaultColor;
+            };
+        }
     }
+
+    // Background Image
+    const bgImageUploadBtn = document.getElementById('bg-image-upload-btn');
+    const bgImageInput = document.getElementById('bg-image-input');
+    const bgImageFilename = document.getElementById('bg-image-filename');
+    const bgImageRemoveBtn = document.getElementById('bg-image-remove-btn');
+
+    bgImageUploadBtn.onclick = () => bgImageInput.click();
+
+    bgImageInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            bgImageFilename.textContent = file.name;
+            const img = new Image();
+            img.onload = () => {
+                renderer.setConfig({ bgImage: img });
+            };
+            img.src = URL.createObjectURL(file);
+        }
+    };
+
+    bgImageRemoveBtn.onclick = () => {
+        bgImageInput.value = ''; // Reset input
+        bgImageFilename.textContent = 'Upload Image...';
+        renderer.setConfig({ bgImage: null });
+    };
 
     durationEl.oninput = (e) => {
         durationValEl.textContent = `${e.target.value}s`;
@@ -176,7 +244,123 @@ document.addEventListener('DOMContentLoaded', () => {
         renderer.setConfig({ holdStart: Number(e.target.value) });
     };
 
-    // ... (rest of animation/timeline logic unchanged) ...
+    // --- Animation Settings & Timeline ---
+    const animationStyleEl = document.getElementById('animation-style');
+    const humanSettingsContainer = document.getElementById('human-settings-container');
+    const humanModeGroup = document.getElementById('human-mode-group'); // Segmented Control
+    const intervalSettings = document.getElementById('interval-settings');
+    const customStopsSettings = document.getElementById('custom-stops-settings');
+    const scrollIncrementEl = document.getElementById('scroll-increment');
+    const incrementValEl = document.getElementById('increment-val');
+    const timelineSlider = document.getElementById('timeline-slider');
+
+    let customStops = [];
+    let currentHumanMode = 'fixed'; // 'fixed' or 'custom'
+
+    // 1. Dropdown Change
+    animationStyleEl.onchange = (e) => {
+        const mode = e.target.value;
+        if (mode === 'human') {
+            humanSettingsContainer.classList.remove('hidden');
+            // Re-apply current sub-mode logic
+            applyHumanMode();
+        } else {
+            // Linear
+            humanSettingsContainer.classList.add('hidden');
+            renderer.setConfig({ scrollMode: 'continuous', stops: [] });
+        }
+    };
+
+    // 2. Sub-mode Segmented Control
+    const humanBtns = humanModeGroup.querySelectorAll('.toggle-btn');
+    humanBtns.forEach(btn => {
+        btn.onclick = () => {
+            humanBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentHumanMode = btn.dataset.value;
+            applyHumanMode();
+        };
+    });
+
+    const applyHumanMode = () => {
+        if (currentHumanMode === 'fixed') {
+            intervalSettings.classList.remove('hidden');
+            customStopsSettings.classList.add('hidden');
+            updateIntervalStops();
+        } else {
+            intervalSettings.classList.add('hidden');
+            customStopsSettings.classList.remove('hidden');
+            renderer.setConfig({ scrollMode: 'human', stops: customStops });
+        }
+    };
+
+    // Interval Logic
+    const updateIntervalStops = () => {
+        const val = Number(scrollIncrementEl.value);
+        incrementValEl.textContent = `${val}%`;
+
+        const stops = [];
+        let current = val;
+        while (current < 100) {
+            stops.push(current / 100);
+            current += val;
+        }
+        renderer.setConfig({ scrollMode: 'human', stops: stops });
+    };
+
+    scrollIncrementEl.oninput = updateIntervalStops;
+
+    // Trigger initial state
+    animationStyleEl.dispatchEvent(new Event('change'));
+
+    // Custom Timeline Logic
+    const renderTimeline = () => {
+        // Clear existing stops (dots) - keep track/progress
+        const existingDots = timelineSlider.querySelectorAll('.timeline-stop');
+        existingDots.forEach(d => d.remove());
+
+        customStops.forEach((stopVal, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'timeline-stop';
+            dot.style.left = `${stopVal * 100}%`;
+            dot.title = `Stop at ${Math.round(stopVal * 100)}% (Double click to remove)`;
+
+            // Remove on dblclick
+            dot.ondblclick = (e) => {
+                e.stopPropagation();
+                customStops.splice(index, 1);
+                renderTimeline();
+                renderer.setConfig({ stops: customStops });
+            };
+
+            timelineSlider.appendChild(dot);
+        });
+    };
+
+    timelineSlider.onclick = (e) => {
+        // Add stop if clicked on track (not on dot)
+        if (e.target.classList.contains('timeline-track') || e.target === timelineSlider) {
+            const rect = timelineSlider.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            let ratio = clickX / rect.width;
+            if (ratio < 0.05) ratio = 0.05; // clamp
+            if (ratio > 0.95) ratio = 0.95;
+
+            customStops.push(ratio);
+            customStops.sort((a, b) => a - b);
+            renderTimeline();
+            renderer.setConfig({ stops: customStops });
+        }
+    };
+
+    // Hover preview?
+    timelineSlider.onmousemove = (e) => {
+        const rect = timelineSlider.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        // Pass to renderer for preview scrolling if we want?
+        // renderer.scrollToPreview(ratio); 
+        // Optional: Implementing drag scrubbing would be nice but simple hover is okay for now.
+    };
 
     // Shadow Settings
     shadowSizeEl.oninput = (e) => {
