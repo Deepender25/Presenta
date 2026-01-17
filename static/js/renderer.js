@@ -345,11 +345,11 @@ class CanvasRenderer {
 
         if (deviceType === 'macbook') {
             shell = 0; // Removed silver edge
-            bezel = 18 * scale; // Reduced 25% (was 24)
+            bezel = 14 * scale; // Reduced by ~20% (was 18)
             r = 10 * scale; // Slightly rounded geometric screen
         } else if (deviceType === 'ipad') {
             shell = 0;
-            bezel = 30 * scale; // Slightly thinner bezel than before for better proportion
+            bezel = 24 * scale; // Reduced by 20% (was 30)
             r = 18 * scale; // Soft screen corners
         } else if (deviceType === 'iphone') {
             shell = 0;
@@ -518,7 +518,7 @@ class CanvasRenderer {
             // Overlay: Notch for MacBook
             if (deviceType === 'macbook') {
                 // Proportional sizing
-                const notchW = Math.round(fw * 0.11); // ~11% of screen width (Reduced)
+                const notchW = Math.round(fw * 0.09); // ~9% of screen width (Reduced from 11%)
                 const notchH = Math.round(notchW * 0.19); // Aspect ratio for notch ~ 5.2:1
 
                 const notchX = fx + (fw - notchW) / 2;
@@ -531,6 +531,21 @@ class CanvasRenderer {
                 ctx.fillStyle = '#080808'; // Match bezel
                 this.roundRect(ctx, notchX, notchY, notchW, notchH, notchR);
                 ctx.fill();
+            }
+
+            // iPad Camera (Top Center Bezel)
+            if (deviceType === 'ipad') {
+                const camR = 5 * scale; // Increased size (was 3)
+                const camY = fy - (bezel / 2);
+                const camX = fx + (fw / 2);
+
+                // Lens Housing (Gray shade as requested)
+                ctx.fillStyle = '#3a3a3c';
+                ctx.beginPath(); ctx.arc(camX, camY, camR, 0, Math.PI * 2); ctx.fill();
+
+                // Inner Glass Reflection (Lighter gray to be noticeable)
+                ctx.fillStyle = '#636366';
+                ctx.beginPath(); ctx.arc(camX, camY, camR * 0.6, 0, Math.PI * 2); ctx.fill();
             }
 
         } else {
