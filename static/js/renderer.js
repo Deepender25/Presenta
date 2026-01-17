@@ -14,7 +14,7 @@ class CanvasRenderer {
             resizeMode: 'fit',
             duration: 5,
             holdStart: 1,
-            scrollMode: 'human', // 'continuous' or 'human'
+            scrollMode: 'continuous', // 'continuous' or 'human'
             stops: [], // Array of ratios 0-1
             holdStop: 1, // Duration to hold at each stop
             cornerRadius: 0,
@@ -216,7 +216,7 @@ class CanvasRenderer {
         switch (type) {
             case 'macbook': w = 1000; h = 640; break; // ~16:10 reduced
             case 'browser': w = 1100; h = 750; break;
-            case 'ipad': w = 700; h = 940; break; // ~3:4
+            case 'ipad': w = 940; h = 700; break; // ~4:3 (Landscape Default)
             case 'iphone': w = 390; h = 844; break; // Standard iPhone 14
             case 'none': default: w = 800; h = 800; // Smaller starter liquid
         }

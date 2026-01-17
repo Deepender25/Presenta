@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Config Changes
     deviceTypeEl.onchange = (e) => {
         const type = e.target.value;
-        renderer.setConfig({ deviceType: type });
+        // renderer.setConfig({ deviceType: type }); // Removed to allow atomic update below
 
         // Toggle radius visibility
         if (type === 'none') {
@@ -75,6 +75,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             radiusWrapper.classList.add('hidden');
         }
+
+        // Determine Default Orientation
+        let targetOrientation = 'landscape';
+        if (type === 'iphone') {
+            targetOrientation = 'portrait';
+        }
+
+        // Update UI Buttons Manually
+        if (targetOrientation === 'portrait') {
+            btnPortrait.classList.add('active');
+            btnLandscape.classList.remove('active');
+        } else {
+            btnLandscape.classList.add('active');
+            btnPortrait.classList.remove('active');
+        }
+
+        // Atomic Update to Renderer
+        renderer.setConfig({
+            deviceType: type,
+            orientation: targetOrientation
+        });
     };
 
     // Orientation
@@ -348,6 +369,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 customStops.sort((a, b) => a - b);
                 renderTimeline();
                 renderer.setConfig({ stops: customStops });
+                // Reset preview to first frame
+                renderer.clearPreview();
             }
         };
 
