@@ -574,24 +574,40 @@ class CanvasRenderer {
     }
 
     drawContent(ctx, x, y, w, h) {
+        // Fill background with white (for letterboxing/bezels)
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, w, h);
+
         let scrollY = 0;
+        let drawX = x;
+        let drawY = y;
+        let drawW = w;
+        let drawH = h;
+
         if (this.contentType === 'image') {
             const { duration, holdStart } = this.config;
             const contentRatio = this.content.naturalWidth / this.content.naturalHeight;
-            let drawW = w;
-            let drawH = drawW / contentRatio;
 
-            if (this.config.resizeMode === 'fill') {
-                const frameRatio = w / h;
-                if (contentRatio > frameRatio) {
-                    drawH = h;
-                    drawW = drawH * contentRatio;
-                }
-            }
-            const maxScroll = drawH - h;
-            if (maxScroll > 0) {
+            // Default: Fit Width (Standard for device screenshots)
+            drawW = w;
+            drawH = drawW / contentRatio;
+
+            // Optional: Support object-fit: contain (Fit Entire Image) logic
+            // But for scrolling screenshots, Fit Width is usually desired.
+            // If image is WIDER than frame (e.g. desktop screenshot on mobile), Fit Width makes height tiny.
+
+            // Logic:
+            // If drawH < h (Image is shorter than screen): CENTER VERTIALLY (Letterbox)
+            // If drawH >= h (Image is taller): SCROLL (existing logic)
+
+            if (drawH < h) {
+                // Center Vertically
+                drawY = y + (h - drawH) / 2;
+            } else {
+                // Scroll Logic
+                const maxScroll = drawH - h;
+
                 let progress = 0;
-
                 if (this.previewProgress !== undefined && this.previewProgress !== null) {
                     progress = this.previewProgress;
                 } else {
@@ -606,23 +622,36 @@ class CanvasRenderer {
                         progress = t / duration;
                         if (progress > 1) progress = 1;
 
-                        // Default ease for 'continuous' look
-                        // If user strictly wants 'linear' (constant speed), we could change this.
-                        // "Linear Smooth (Constant)" text.
-                        // Let's use linear if explicitly set to a 'linear' strict mode? 
-                        // But usually "Smooth" implies ease.
-                        // Let's stick to Ease-In-Out for aesthetic unless requested otherwise.
                         progress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
                     }
                 }
-
                 scrollY = progress * maxScroll;
+                drawY = y - scrollY;
             }
-            let offsetX = 0;
-            if (drawW > w) offsetX = (drawW - w) / 2;
-            ctx.drawImage(this.content, x - offsetX, y - scrollY, drawW, drawH);
+
+            ctx.drawImage(this.content, drawX, drawY, drawW, drawH);
+
         } else if (this.contentType === 'video') {
-            ctx.drawImage(this.content, x, y, w, h);
+            // Video: Aspect Fit (Contain)
+            // Never stretch video. 
+            const contentRatio = this.content.videoWidth / this.content.videoHeight;
+            const frameRatio = w / h;
+
+            if (contentRatio > frameRatio) {
+                // Content is wider than frame: Fit Width
+                drawW = w;
+                drawH = w / contentRatio;
+                drawX = x;
+                drawY = y + (h - drawH) / 2; // Center Vertically
+            } else {
+                // Content is taller/same: Fit Height
+                drawH = h;
+                drawW = h * contentRatio;
+                drawY = y;
+                drawX = x + (w - drawW) / 2; // Center Horizontally
+            }
+
+            ctx.drawImage(this.content, drawX, drawY, drawW, drawH);
         }
     }
     drawHandles(ctx, x, y, w, h) {
@@ -746,13 +775,24 @@ class CanvasRenderer {
     startExport(quality, format) {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
 
-        // 1. Determine Resolution
-        let targetW = 1920;
-        let targetH = 1080;
-        // Default 1080p, check for 4K
+        // 1. Determine Resolution (Respecting Aspect Ratio)
+        const aspect = this.canvas.width / this.canvas.height;
+        let baseSize = 1080; // Reference short side (1080p)
+
         if (quality && quality.includes('4K')) {
-            targetW = 3840;
-            targetH = 2160;
+            baseSize = 2160; // Reference short side (4K)
+        }
+
+        let targetW, targetH;
+
+        if (aspect >= 1) {
+            // Landscape or Square (Height is reference)
+            targetH = baseSize;
+            targetW = Math.round((baseSize * aspect) / 2) * 2; // Ensure even
+        } else {
+            // Portrait (Width is reference)
+            targetW = baseSize;
+            targetH = Math.round((baseSize / aspect) / 2) * 2; // Ensure even
         }
 
         // 2. Determine Format / MimeType
@@ -800,7 +840,10 @@ class CanvasRenderer {
         this.recordedChunks = [];
 
         // Increase bitrate for higher text clarity (especially 4K)
-        const options = { mimeType: mimeType, videoBitsPerSecond: targetW > 1920 ? 25000000 : 8000000 };
+        const pixelCount = targetW * targetH;
+        // 1920*1080 = 2,073,600. If significantly higher, use high bitrate.
+        const videoBits = pixelCount > 2500000 ? 25000000 : 8000000;
+        const options = { mimeType: mimeType, videoBitsPerSecond: videoBits };
 
         try {
             this.mediaRecorder = new MediaRecorder(stream, options);
