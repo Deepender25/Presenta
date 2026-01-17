@@ -340,24 +340,27 @@ class CanvasRenderer {
         let shell = 0; // The metallic outer casing (Macbook/iPad)
         let r = 0; // Radius of screen content/bezel
 
+        // Scale Factor (Defaults to 1)
+        const scale = this.config.scale || 1;
+
         if (deviceType === 'macbook') {
             shell = 0; // Removed silver edge
-            bezel = 18; // Reduced 25% (was 24)
-            r = 10; // Slightly rounded geometric screen
+            bezel = 18 * scale; // Reduced 25% (was 24)
+            r = 10 * scale; // Slightly rounded geometric screen
         } else if (deviceType === 'ipad') {
             shell = 0;
-            bezel = 30; // Slightly thinner bezel than before for better proportion
-            r = 18; // Soft screen corners
+            bezel = 30 * scale; // Slightly thinner bezel than before for better proportion
+            r = 18 * scale; // Soft screen corners
         } else if (deviceType === 'iphone') {
             shell = 0;
-            bezel = 20; // Reduced by ~10% (was 22)
-            r = 30; // Reduced from 42 (Outer becomes 50 instead of 62)
+            bezel = 20 * scale; // Reduced by ~10% (was 22)
+            r = 30 * scale; // Reduced from 42 (Outer becomes 50 instead of 62)
         } else if (deviceType === 'browser') {
             // Browser: No bezel, just header
-            bezel = 0; shell = 0; r = 10;
+            bezel = 0; shell = 0; r = 10 * scale;
         } else {
             // None
-            bezel = 0; shell = 0; r = cornerRadius;
+            bezel = 0; shell = 0; r = cornerRadius * scale;
         }
 
         // 3. Draw Shadow
@@ -379,8 +382,10 @@ class CanvasRenderer {
             }
 
             // Apply Multipliers
-            ctx.shadowBlur = sBlur * shadowSize;
-            ctx.shadowOffsetY = sOffsetY * shadowSize;
+            // Boost shadow slightly for high-res to maintain density
+            const sScale = scale;
+            ctx.shadowBlur = sBlur * shadowSize * sScale;
+            ctx.shadowOffsetY = sOffsetY * shadowSize * sScale;
             ctx.shadowColor = `rgba(0,0,0,${sBaseOpacity * shadowOpacity})`;
 
             // Draw the 'shadow caster' shape (Outer Shell)
@@ -438,23 +443,28 @@ class CanvasRenderer {
         let contentYOffset = 0;
 
         if (deviceType === 'browser') {
-            const headerH = 40;
+            const headerH = 40 * scale;
             ctx.fillStyle = '#f3f4f6'; // Light grey
-            const headerR = { tl: 10, tr: 10, br: 0, bl: 0 };
+            const headerR = { tl: 10 * scale, tr: 10 * scale, br: 0, bl: 0 };
             this.roundRect(ctx, fx, fy, fw, headerH, headerR);
             ctx.fill();
             // Divider
             ctx.fillStyle = '#e5e7eb';
-            ctx.fillRect(fx, fy + headerH - 1, fw, 1);
+            ctx.fillRect(fx, fy + headerH - (1 * scale), fw, 1 * scale);
             // Traffic Lights
-            ctx.fillStyle = '#ff5f56'; ctx.beginPath(); ctx.arc(fx + 24, fy + 20, 6, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#ffbd2e'; ctx.beginPath(); ctx.arc(fx + 44, fy + 20, 6, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#27c93f'; ctx.beginPath(); ctx.arc(fx + 64, fy + 20, 6, 0, Math.PI * 2); ctx.fill();
+            const tlY = fy + (20 * scale);
+            const tlR = 6 * scale;
+            const tlGap = 20 * scale;
+            const tlStart = fx + (24 * scale);
+
+            ctx.fillStyle = '#ff5f56'; ctx.beginPath(); ctx.arc(tlStart, tlY, tlR, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffbd2e'; ctx.beginPath(); ctx.arc(tlStart + tlGap, tlY, tlR, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#27c93f'; ctx.beginPath(); ctx.arc(tlStart + tlGap * 2, tlY, tlR, 0, Math.PI * 2); ctx.fill();
 
             // Address Bar hint
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.roundRect(fx + 90, fy + 8, fw - 110, 24, 4);
+            ctx.roundRect(fx + (90 * scale), fy + (8 * scale), fw - (110 * scale), 24 * scale, 4 * scale);
             ctx.fill();
 
             contentYOffset = headerH;
@@ -693,18 +703,92 @@ class CanvasRenderer {
         this.draw();
     }
 
-    startExport() {
+    startExport(quality, format) {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
+
+        // 1. Determine Resolution
+        let targetW = 1920;
+        let targetH = 1080;
+        // Default 1080p, check for 4K
+        if (quality && quality.includes('4K')) {
+            targetW = 3840;
+            targetH = 2160;
+        }
+
+        // 2. Determine Format / MimeType
+        let mimeType = 'video/webm;codecs=vp9';
+        let ext = 'webm';
+        if (format === 'MP4') {
+            // Check support
+            if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E,mp4a.40.2')) {
+                mimeType = 'video/mp4;codecs=avc1.42E01E,mp4a.40.2';
+                ext = 'mp4';
+            } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                mimeType = 'video/mp4';
+                ext = 'mp4';
+            } else {
+                console.warn("MP4 export not supported by this browser. Falling back to WebM.");
+            }
+        }
+
+        // 3. Save Original State
+        const origCanvasW = this.canvas.width;
+        const origCanvasH = this.canvas.height;
+        const origFrameW = this.frame.width;
+        const origFrameH = this.frame.height;
+        const origRadius = this.config.cornerRadius;
+        const origShadow = this.config.shadowSize;
+
+        // 4. Resize Canvas & Scale Content
+        // Calculate scale relative to current canvas
+        const scale = targetW / origCanvasW;
+
+        this.canvas.width = targetW;
+        this.canvas.height = targetH;
+
+        // Scale Frame
+        this.frame.width = Math.round(origFrameW * scale);
+        this.frame.height = Math.round(origFrameH * scale);
+
+        // Set Global Scale for draw()
+        this.config.scale = scale;
+
+        this.updateFramePosition();
+        this.draw();
+
         const stream = this.canvas.captureStream(60);
         this.recordedChunks = [];
-        this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+
+        // Increase bitrate for higher text clarity (especially 4K)
+        const options = { mimeType: mimeType, videoBitsPerSecond: targetW > 1920 ? 25000000 : 8000000 };
+
+        try {
+            this.mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e) {
+            console.error("MediaRecorder error:", e);
+            // Fallback to basic
+            this.mediaRecorder = new MediaRecorder(stream);
+        }
+
         this.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) this.recordedChunks.push(e.data); };
         this.mediaRecorder.onstop = () => {
-            const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+            const blob = new Blob(this.recordedChunks, { type: mimeType.split(';')[0] });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = 'show-off-export.webm';
+            const a = document.createElement('a'); a.style.display = 'none'; a.href = url;
+            a.download = `presenta-export.${ext}`;
             document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+
+            // Restore Original State
+            this.config.scale = 1;
+            this.canvas.width = origCanvasW;
+            this.canvas.height = origCanvasH;
+            this.frame.width = origFrameW;
+            this.frame.height = origFrameH;
+
+            this.updateFramePosition();
+            this.draw();
         };
+
         this.mediaRecorder.start();
         this.play(() => { this.mediaRecorder.stop(); });
     }

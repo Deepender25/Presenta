@@ -496,8 +496,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const exportQualityEl = document.getElementById('export-quality');
+    const exportFormatEl = document.getElementById('export-format');
+
     exportBtn.onclick = () => {
-        renderer.startExport();
+        const quality = exportQualityEl.value;
+        const format = exportFormatEl.value;
+        renderer.startExport(quality, format);
     };
 
     // Initial UI Sync
