@@ -218,7 +218,7 @@ class CanvasRenderer {
             case 'browser': w = 1100; h = 750; break;
             case 'ipad': w = 940; h = 700; break; // ~4:3 (Landscape Default)
             case 'iphone': w = 390; h = 844; break; // Standard iPhone 14
-            case 'none': default: w = 800; h = 800; // Smaller starter liquid
+            case 'none': default: w = 1000; h = 625; // 16:10 Landscape
         }
         this.frame.width = w; this.frame.height = h;
 
