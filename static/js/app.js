@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function handleFile(file) {
-        dropZone.innerHTML = `<p>${file.name}</p>`;
+        dropZone.innerHTML = `<p class="file-name" title="${file.name}">${file.name}</p>`;
         renderer.loadContent(file);
 
         // Conditional Button Visibility
@@ -570,4 +570,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setOrientation('landscape');
 
+    // --- Custom Dropdown Implementation ---
+    const setupCustomDropdowns = () => {
+        const selects = document.querySelectorAll('select:not(.hidden):not(.no-custom), select.hidden#aspect-ratio');
+        // Note: aspect-ratio might be hidden initially by CSS but we want to customize it if we unhide it?
+        // Actually, the aspect-ratio UI uses buttons, and the select is hidden. We should IGNOR hidden selects usually.
+        // But let's stick to visible ones plus explicit targets.
+
+        const targetSelects = document.querySelectorAll('select:not(.no-custom)');
+
+        targetSelects.forEach(select => {
+            if (select.classList.contains('customized')) return; // Avoid double init
+            if (select.hasAttribute('hidden') || select.classList.contains('hidden')) {
+                // If it's the aspect-ratio select which is hidden because we use buttons, we skip it.
+                return;
+            }
+
+            select.classList.add('hidden', 'customized'); // Hide native
+
+            // Wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-select-wrapper';
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'custom-select-header';
+            const selectedOption = select.options[select.selectedIndex];
+            header.innerHTML = `
+                <span class="selected-text">${selectedOption ? selectedOption.text : ''}</span>
+                <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            `;
+
+            // List
+            const list = document.createElement('div');
+            list.className = 'custom-select-list hidden';
+
+            Array.from(select.options).forEach((opt, index) => {
+                const item = document.createElement('div');
+                item.className = `custom-select-option ${index === select.selectedIndex ? 'selected' : ''}`;
+                item.textContent = opt.text;
+                item.dataset.value = opt.value;
+
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    select.value = opt.value;
+                    select.dispatchEvent(new Event('change'));
+
+                    header.querySelector('.selected-text').textContent = opt.text;
+                    list.querySelectorAll('.custom-select-option').forEach(el => el.classList.remove('selected'));
+                    item.classList.add('selected');
+                    list.classList.add('hidden');
+                    header.classList.remove('active');
+                };
+                list.appendChild(item);
+            });
+
+            // Header Click
+            header.onclick = (e) => {
+                e.stopPropagation();
+
+                // Close others
+                document.querySelectorAll('.custom-select-list').forEach(l => {
+                    if (l !== list) l.classList.add('hidden');
+                });
+                document.querySelectorAll('.custom-select-header').forEach(h => {
+                    if (h !== header) h.classList.remove('active');
+                });
+
+                if (list.classList.contains('hidden')) {
+                    list.classList.remove('hidden');
+                    header.classList.add('active');
+                } else {
+                    list.classList.add('hidden');
+                    header.classList.remove('active');
+                }
+            };
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(list);
+            select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+            // Sync external changes
+            select.addEventListener('change', () => {
+                const newText = select.options[select.selectedIndex].text;
+                header.querySelector('.selected-text').textContent = newText;
+                list.querySelectorAll('.custom-select-option').forEach(el => {
+                    if (el.dataset.value === select.value) el.classList.add('selected');
+                    else el.classList.remove('selected');
+                });
+            });
+        });
+
+        // Global Click to Close
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.custom-select-list').forEach(l => l.classList.add('hidden'));
+            document.querySelectorAll('.custom-select-header').forEach(h => h.classList.remove('active'));
+        });
+    };
+
+    setupCustomDropdowns();
 });
