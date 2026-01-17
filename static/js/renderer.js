@@ -359,6 +359,10 @@ class CanvasRenderer {
             await new Promise(r => img.onload = r);
             this.content = img;
             this.contentType = 'image';
+
+            // Auto-set duration to 10s default for images
+            this.config.duration = 10;
+            if (this.callbacks.onDurationChange) this.callbacks.onDurationChange(10);
         }
         this.currentTime = 0; this.draw();
     }

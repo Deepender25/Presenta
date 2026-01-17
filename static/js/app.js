@@ -627,6 +627,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 list.appendChild(item);
             });
 
+            // Append List to Body to avoid clipping/z-index issues
+            document.body.appendChild(list);
+
+            // Update Position logic
+            const updatePosition = () => {
+                const rect = header.getBoundingClientRect();
+                list.style.top = `${rect.bottom + 4}px`;
+                list.style.left = `${rect.left}px`;
+                list.style.width = `${rect.width}px`;
+            };
+
             // Header Click
             header.onclick = (e) => {
                 e.stopPropagation();
@@ -640,16 +651,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (list.classList.contains('hidden')) {
+                    // Open
+                    updatePosition();
                     list.classList.remove('hidden');
                     header.classList.add('active');
                 } else {
+                    // Close
                     list.classList.add('hidden');
                     header.classList.remove('active');
                 }
             };
 
+            // Handle scroll/resize to close dropdowns
+            window.addEventListener('scroll', () => {
+                if (!list.classList.contains('hidden')) {
+                    list.classList.add('hidden');
+                    header.classList.remove('active');
+                }
+            }, true); // Capture phase to catch all scrolls
+            window.addEventListener('resize', () => {
+                if (!list.classList.contains('hidden')) {
+                    list.classList.add('hidden');
+                    header.classList.remove('active');
+                }
+            });
+
             wrapper.appendChild(header);
-            wrapper.appendChild(list);
+            // wrapper.appendChild(list); // Moved to body
             select.parentNode.insertBefore(wrapper, select.nextSibling);
 
             // Sync external changes
