@@ -382,43 +382,68 @@ class CanvasRenderer {
             }
 
             // Apply Multipliers
-            // Boost shadow slightly for high-res to maintain density
-            const sScale = scale;
-            ctx.shadowBlur = sBlur * shadowSize * sScale;
-            ctx.shadowOffsetY = sOffsetY * shadowSize * sScale;
-            ctx.shadowColor = `rgba(0,0,0,${sBaseOpacity * shadowOpacity})`;
+            const downsampled = scale > 1.5;
 
-            // Draw the 'shadow caster' shape (Outer Shell)
-            ctx.fillStyle = (deviceType === 'none' || deviceType === 'browser') ? 'rgba(0,0,0,0)' : '#000';
+            if (downsampled) {
+                // High-Res Export Fix: Downsampled Shadow Pipeline
+                // Render shadow on a small temp canvas (1080p scale), then upscale it.
+                // This bypasses browser limitations on large blur radii (>200px).
+                const downScale = 1.0 / scale;
+                const shW = Math.ceil(this.canvas.width * downScale);
+                const shH = Math.ceil(this.canvas.height * downScale);
 
-            // For browser, shadow is cast by content rect (or window rect)
-            if (deviceType === 'browser') {
-                this.roundRect(ctx, fx, fy, fw, fh, r);
-                // Note: we don't fill here because browser header/content fill later.
-                // But to cast shadow we need to fill.
-                ctx.fillStyle = '#fff';
-                ctx.fill();
-            } else if (deviceType !== 'none') {
-                this.roundRect(ctx, fx - totalPadding, fy - totalPadding, fw + totalPadding * 2, fh + totalPadding * 2, r + totalPadding / 2);
-                ctx.fill();
+                const shC = document.createElement('canvas'); // Temp Canvas
+                shC.width = shW;
+                shC.height = shH;
+                const shCtx = shC.getContext('2d');
+
+                // Standard Low-Res Shadow Settings
+                shCtx.shadowBlur = sBlur * shadowSize;
+                shCtx.shadowOffsetY = sOffsetY * shadowSize;
+                shCtx.shadowColor = `rgba(0,0,0,${sBaseOpacity * shadowOpacity})`;
+
+                // Transform context to map 4K coords -> Low-Res coords
+                shCtx.scale(downScale, downScale);
+
+                // Draw Shadow Caster
+                shCtx.fillStyle = '#000'; // Casts shadow
+
+                if (deviceType === 'browser') {
+                    // Browser Shape
+                    this.roundRect(shCtx, fx, fy, fw, fh, r);
+                    shCtx.fillStyle = '#fff'; shCtx.fill();
+                } else if (deviceType !== 'none') {
+                    // Device Shape
+                    this.roundRect(shCtx, fx - totalPadding, fy - totalPadding, fw + totalPadding * 2, fh + totalPadding * 2, r + totalPadding / 2);
+                    shCtx.fill();
+                } else {
+                    // None Shape
+                    this.roundRect(shCtx, fx, fy, fw, fh, r);
+                    shCtx.fillStyle = '#fff'; shCtx.fill();
+                }
+
+                // Composite the perfect low-res shadow onto the high-res canvas (Upscale)
+                ctx.drawImage(shC, 0, 0, this.canvas.width, this.canvas.height);
+
             } else {
-                // DeviceType == 'none'
-                // In previous code, if deviceType === 'none', we were entering here but maybe not drawing correctly for 'none' shadow? 
-                // Original logic around line 335: ctx.fillStyle = ... ? 'rgba(0,0,0,0)'
-                // And then line 345: else if (deviceType !== 'none') ...
-                // So 'none' was NOT casting a shadow in the original block if fillStyle was transparent and roundRect wasn't called?
-                // Wait, line 329 says `if (this.content || deviceType !== 'none')`
-                // IF NO DEVICE, we still want shadow? The original code had:
-                /*
-                   if (deviceType === 'browser') ...
-                   else if (deviceType !== 'none') ...
-                */
-                // So "none" actually fell through and didn't draw a shadow shape?
-                // Let's fix this to draw shadow for content rect if device is none.
+                // Standard Direct Rendering (Low-Res / Preview)
+                ctx.shadowBlur = sBlur * shadowSize * scale;
+                ctx.shadowOffsetY = sOffsetY * shadowSize * scale;
+                ctx.shadowColor = `rgba(0,0,0,${sBaseOpacity * shadowOpacity})`;
 
-                this.roundRect(ctx, fx, fy, fw, fh, r);
-                ctx.fillStyle = '#fff'; // Need a fill to cast shadow
-                ctx.fill();
+                ctx.fillStyle = (deviceType === 'none' || deviceType === 'browser') ? 'rgba(0,0,0,0)' : '#000';
+
+                // Draw shapes
+                if (deviceType === 'browser') {
+                    this.roundRect(ctx, fx, fy, fw, fh, r);
+                    ctx.fillStyle = '#fff'; ctx.fill();
+                } else if (deviceType !== 'none') {
+                    this.roundRect(ctx, fx - totalPadding, fy - totalPadding, fw + totalPadding * 2, fh + totalPadding * 2, r + totalPadding / 2);
+                    ctx.fill();
+                } else {
+                    this.roundRect(ctx, fx, fy, fw, fh, r);
+                    ctx.fillStyle = '#fff'; ctx.fill();
+                }
             }
             ctx.restore();
         }
