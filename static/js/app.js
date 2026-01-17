@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const frameWidthEl = document.getElementById('frame-width');
     const frameHeightEl = document.getElementById('frame-height');
     const resetSizeBtn = document.getElementById('reset-size-btn');
+    const fitContentBtn = document.getElementById('fit-content-btn');
 
     // Init Renderer
     const renderer = new CanvasRenderer(canvas, {
@@ -62,6 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFile(file) {
         dropZone.innerHTML = `<p>${file.name}</p>`;
         renderer.loadContent(file);
+
+        // Conditional Button Visibility
+        const fitBtn = document.getElementById('fit-content-btn');
+        if (fitBtn) {
+            if (file.type.startsWith('video')) {
+                fitBtn.style.display = 'inline-flex';
+            } else {
+                fitBtn.style.display = 'none';
+            }
+        }
     }
 
     // Config Changes
@@ -133,6 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
     resetSizeBtn.onclick = () => {
         renderer.resetSize();
     };
+
+    if (fitContentBtn) {
+        fitContentBtn.onclick = () => {
+            renderer.fitFrameToContent();
+        };
+    }
 
     // Other Configs
     // resizeModeEl removed

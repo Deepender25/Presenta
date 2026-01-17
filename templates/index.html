@@ -104,14 +104,28 @@
                                     <input type="number" id="frame-height" value="800">
                                 </div>
                             </div>
-                            <button id="reset-size-btn" class="secondary small-btn full-width">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="23 4 23 10 17 10"></polyline>
-                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                                </svg>
-                                Reset Size
-                            </button>
+                            <div class="row-inputs" style="margin-top: 0.5rem; gap: 0.5rem;">
+                                <button id="fit-content-btn" class="secondary small-btn" style="flex: 1; display: none;"
+                                    title="Match frame size to content aspect ratio">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        style="margin-right: 4px;">
+                                        <polyline points="4 14 10 14 10 20"></polyline>
+                                        <polyline points="20 10 14 10 14 4"></polyline>
+                                        <line x1="14" y1="10" x2="21" y2="3"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                    Fit Content
+                                </button>
+                                <button id="reset-size-btn" class="secondary small-btn" style="flex: 1;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        style="margin-right: 4px;">
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12" />
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -297,8 +311,8 @@
             </section>
         </main>
 
-        <script src="/static/js/renderer.js?v=16"></script>
-        <script src="/static/js/app.js?v=16"></script>
+        <script src="/static/js/renderer.js?v=18"></script>
+        <script src="/static/js/app.js?v=18"></script>
     </body>
 
 </html>

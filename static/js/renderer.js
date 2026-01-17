@@ -97,18 +97,61 @@ class CanvasRenderer {
             if (handle.includes('n')) newH -= dy * 2;
 
             // Aspect Ratio Lock for Corners
+            // Disable native ratio lock if we are snapping to content (implied), 
+            // OR keep it but allow snap override?
+            // If we lock to StartRatio, and StartRatio is "bad", we can't snap to "good" unless we break lock.
+            // Let's DISABLED strict start-ratio lock to allow free resizing which users often expect to fix aspect ratio?
+            // User request: "it is a 1:1 increment or decrement" implying free resize?
+            // But "corners usually scale proportionally".
+            // Compromise: Lock ratio UNLESS we are close to perfect content ratio?
+            // Or just remove the lock entirely to give user full control logic?
+            // "make it like when th efit cntent button is used it changes the sixe...".
+
+            // I'll remove the forced ratio lock for corners to allow the user to drag freely to matching ratio.
             if (handle.length === 2) {
-                // If it's a corner (nw, ne, sw, se), lock the ratio.
-                // We use the Width as the driver for smoothness
+                // Restore 1:1 Scaling (Locked Ratio)
                 newH = newW / this.interaction.startRatio;
             }
 
             if (newW < 200) newW = 200;
             if (newH < 200) newH = 200;
 
+            if (newH < 200) newH = 200;
+
             // Constrain to canvas? Optional but good idea for "cover" bug
             if (newW > this.canvas.width - 40) newW = this.canvas.width - 40;
             if (newH > this.canvas.height - 40) newH = this.canvas.height - 40;
+
+            // SNAP TO CONTENT RATIO (Magnetism)
+            // If dragging corners, check if we are close to the perfect content ratio
+            if (this.content && !handle.includes('n') && !handle.includes('s') && !handle.includes('e') && !handle.includes('w')) {
+                // Only apply to corners (nw, ne, sw, se) where aspect ratio is fluid
+                // Actually, corners usually lock ratio? 
+                // Line 100: handle.length === 2 (Corner) -> Locks to START Ratio.
+                // We need to override this IF content exists and we are "free resizing" or if the user wants to snap to content.
+                // Wait, current logic locks to START ratio.
+                // If existing ratio is bad, locking keeps it bad.
+                // User wants to CHANGE ratio to perfect one.
+
+                // Let's relax the lock if we hit the "Perfect" zone?
+                // Or simple: Just override height if it matches content ratio.
+
+                let ratio = 1;
+                if (this.contentType === 'video') ratio = this.content.videoWidth / this.content.videoHeight;
+                else ratio = this.content.naturalWidth / this.content.naturalHeight;
+
+                let yOffset = 0;
+                const scale = this.config.scale || 1;
+                if (this.config.deviceType === 'browser') yOffset = 40 * scale;
+
+                const perfectH = (newW / ratio) + yOffset;
+
+                // Snap Threshold (Magnetism)
+                if (Math.abs(newH - perfectH) < 20) {
+                    newH = perfectH;
+                    // Visual feedback? Cursor?
+                }
+            }
 
             this.frame.width = Math.round(newW);
             this.frame.height = Math.round(newH);
@@ -207,7 +250,9 @@ class CanvasRenderer {
 
     setFrameSize(w, h) {
         this.frame.width = w; this.frame.height = h;
-        this.updateFramePosition(); this.draw();
+        this.updateFramePosition();
+        this.draw();
+        if (this.callbacks.onSizeChange) this.callbacks.onSizeChange(this.frame.width, this.frame.height);
     }
 
     setDeviceDefaults(type) {
@@ -259,6 +304,36 @@ class CanvasRenderer {
         this.draw();
     }
 
+    fitFrameToContent() {
+        if (!this.content) return;
+
+        let ratio = 1;
+        if (this.contentType === 'video') {
+            ratio = this.content.videoWidth / this.content.videoHeight;
+        } else {
+            ratio = this.content.naturalWidth / this.content.naturalHeight;
+        }
+
+        // Adjust height to match aspect ratio of content based on current width.
+        // Account for device-specific structural offsets (e.g. Browser Header)
+        // BEZEL NOTE: 'bezel' is usually drawn OUTSIDE the frame width/height (fx - bezel).
+        // So Frame Width usually EQUALS Screen Width.
+        // EXCEPTION: Browser Header is drawn INSIDE the frame height (pushes content down).
+
+        let yOffset = 0;
+        const scale = this.config.scale || 1;
+
+        if (this.config.deviceType === 'browser') {
+            yOffset = 40 * scale; // Standard browser header height
+        }
+
+        const newH = Math.round(this.frame.width / ratio) + yOffset;
+        this.setFrameSize(this.frame.width, newH);
+
+        // Ensure it fits canvas
+        this.fitFrameToCanvas();
+    }
+
     // ... Load/Play/Stop methods
     async loadContent(file) {
         const objectUrl = URL.createObjectURL(file);
@@ -283,6 +358,12 @@ class CanvasRenderer {
         if (this.isPlaying) return;
         this.previewProgress = null; // Clear preview
         this.isPlaying = true; this.startTime = null; this.lastFrameTime = this.timestamp();
+
+        // Native Video Playback (Smoothness Fix)
+        if (this.contentType === 'video' && this.content) {
+            this.content.play().catch(e => console.warn("Video play interrupted", e));
+        }
+
         const loop = (now) => {
             if (!this.isPlaying) return;
             if (!this.startTime) this.startTime = now;
@@ -298,12 +379,24 @@ class CanvasRenderer {
 
             if (this.currentTime > totalDuration) { this.stop(); if (cb) cb(); return; }
             this.draw();
-            if (this.contentType === 'video') this.content.currentTime = this.currentTime % this.content.duration;
+            // Removed: this.content.currentTime = ... (This caused stutter)
             this.animationId = requestAnimationFrame(loop);
         };
         this.animationId = requestAnimationFrame(loop);
     }
-    stop() { this.isPlaying = false; cancelAnimationFrame(this.animationId); this.currentTime = 0; this.previewProgress = null; this.draw(); }
+    stop() {
+        this.isPlaying = false;
+        cancelAnimationFrame(this.animationId);
+        this.currentTime = 0;
+        this.previewProgress = null;
+
+        if (this.contentType === 'video' && this.content) {
+            this.content.pause();
+            this.content.currentTime = 0;
+        }
+
+        this.draw();
+    }
 
     // --- Drawing ---
     draw() {
@@ -641,12 +734,20 @@ class CanvasRenderer {
                 // Content is wider than frame: Fit Width
                 drawW = w;
                 drawH = w / contentRatio;
+
+                // Tolerance Snap (Fix for 1px gaps during scaling)
+                if (Math.abs(drawH - h) < 2) drawH = h;
+
                 drawX = x;
                 drawY = y + (h - drawH) / 2; // Center Vertically
             } else {
                 // Content is taller/same: Fit Height
                 drawH = h;
                 drawW = h * contentRatio;
+
+                // Tolerance Snap
+                if (Math.abs(drawW - w) < 2) drawW = w;
+
                 drawY = y;
                 drawX = x + (w - drawW) / 2; // Center Horizontally
             }
