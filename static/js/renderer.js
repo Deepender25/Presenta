@@ -34,6 +34,7 @@ class CanvasRenderer {
         this.content = null;
         this.contentType = null;
         this.isPlaying = false;
+        this.isExporting = false;
         this.currentTime = 0;
         this.animationId = null;
         this.mediaRecorder = null;
@@ -343,6 +344,14 @@ class CanvasRenderer {
             this.content.muted = true;
             this.content.loop = true;
             await this.content.play(); this.content.pause(); this.content.currentTime = 0;
+
+            // Auto-set duration
+            if (this.content.duration && isFinite(this.content.duration)) {
+                const dur = Math.ceil(this.content.duration);
+                this.config.duration = dur;
+                if (this.callbacks.onDurationChange) this.callbacks.onDurationChange(dur);
+            }
+
             this.contentType = 'video';
         } else {
             const img = new Image();
@@ -371,11 +380,14 @@ class CanvasRenderer {
             this.currentTime = elapsed;
 
             // Calculate total duration based on stops if in human mode
-            let totalDuration = this.config.holdStart + this.config.duration;
+            let computedHoldStart = this.config.holdStart;
+            if (this.contentType === 'video') computedHoldStart = 0; // Force 0 for videos
+
+            let totalDuration = computedHoldStart + this.config.duration;
             if (this.config.scrollMode === 'human' && this.config.stops.length > 0) {
                 totalDuration += this.config.stops.length * this.config.holdStop;
             }
-            totalDuration += 2; // Buffer
+            // totalDuration += 2; // REMOVED BUFFER per user request (Exact Duration)
 
             if (this.currentTime > totalDuration) { this.stop(); if (cb) cb(); return; }
             this.draw();
@@ -653,6 +665,12 @@ class CanvasRenderer {
         // if (!this.isPlaying) {
         //    this.drawHandles(ctx, fx, fy, fw, fh);
         // }
+
+        // 8. Video Progress Bar (Visual Only)
+        // Hide during export to keep final video clean
+        if (this.contentType === 'video' && !this.isExporting) {
+            this.drawProgressBar(ctx);
+        }
     }
 
     // ... (drawContent, drawHandles, roundRect, startExport same, just ensure they are included)
@@ -799,6 +817,55 @@ class CanvasRenderer {
         return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     }
 
+    drawProgressBar(ctx) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const barH = 6; // Thin bar
+        const y = h - barH;
+
+        // Draw Background (Track)
+        // Use semi-transparent black for visibility on light AND dark backgrounds
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, y, w, barH);
+
+        // Progress Logic
+        let progress = 0;
+
+        // If playing, use computed time.
+        // If paused, we might have a preview progress or reset to 0.
+        // But for video, checking this.content.currentTime might be better if we want true sync?
+        // But 'play' loop manages this.currentTime for animation. content.currentTime follows it.
+
+        let t = this.currentTime - this.config.holdStart;
+        if (t < 0) t = 0;
+
+        if (this.config.duration > 0) {
+            progress = t / this.config.duration;
+        }
+
+        if (progress > 1) progress = 1;
+        if (progress < 0) progress = 0;
+
+        // Draw Active Bar
+        ctx.fillStyle = '#10b981'; // Emerald Green
+        ctx.fillRect(0, y, w * progress, barH);
+
+        // Draw Timer Labels
+        ctx.fillStyle = '#6b7280'; // Darker gray for better contrast
+        ctx.font = '500 12px Inter, sans-serif';
+        ctx.textBaseline = 'bottom';
+
+        // Left Label (Current Time)
+        // Format to mm:ss or just ss? User showed '0s'. Let's stick to simple.
+        const curS = Math.floor(t);
+        ctx.textAlign = 'left';
+        ctx.fillText(`${curS}s`, 10, y - 6);
+
+        // Right Label (Total Time)
+        ctx.textAlign = 'right';
+        ctx.fillText(`${this.config.duration}s`, w - 10, y - 6);
+    }
+
     calculateSegmentedProgress(timeElapsed) {
         // Prepare segments: 0 -> stop1 -> stop2 -> ... -> 1
         // We need to distribute the main 'duration' across the movement segments proportional to distance.
@@ -873,8 +940,10 @@ class CanvasRenderer {
         this.draw();
     }
 
-    startExport(quality, format) {
+    startExport(quality, format, onProgress) {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
+        if (this.isExporting) return;
+        this.isExporting = true;
 
         // 1. Determine Resolution (Respecting Aspect Ratio)
         const aspect = this.canvas.width / this.canvas.height;
@@ -970,10 +1039,21 @@ class CanvasRenderer {
             this.frame.height = origFrameH;
 
             this.updateFramePosition();
+            this.isExporting = false;
             this.draw();
         };
 
         this.mediaRecorder.start();
-        this.play(() => { this.mediaRecorder.stop(); });
+
+        // Orchestrate Playback for Export
+        // Ensure we start from 0 and record the exact duration
+        if (this.isPlaying) this.stop();
+
+        this.play(() => {
+            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                this.mediaRecorder.stop();
+            }
+        });
+
     }
 }

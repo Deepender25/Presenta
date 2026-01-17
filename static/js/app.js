@@ -41,6 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
         onSizeChange: (w, h) => {
             frameWidthEl.value = Math.round(w);
             frameHeightEl.value = Math.round(h);
+        },
+        onDurationChange: (d) => {
+            durationEl.value = d;
+            durationValEl.textContent = `${d}s`;
+            // Renderer config is already updated internally by the time this is called?
+            // Or should we update it? 
+            // Better to just update UI, assuming renderer did its own update.
+            // Actually, app.js listeners might trigger setConfig again if we aren't careful.
+            // But updating input value programmatically doesn't trigger 'input' event usually.
         }
     });
 
