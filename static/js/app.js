@@ -525,10 +525,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportQualityEl = document.getElementById('export-quality');
     const exportFormatEl = document.getElementById('export-format');
 
+    // Export Logic
+    const exportOverlay = document.getElementById('export-overlay');
+    const cancelExportBtn = document.getElementById('cancel-export-btn');
+    const sidebar = document.getElementById('sidebar');
+
+    const setExportUI = (active) => {
+        if (active) {
+            exportOverlay.classList.remove('hidden');
+            sidebar.classList.add('disabled');
+        } else {
+            exportOverlay.classList.add('hidden');
+            sidebar.classList.remove('disabled');
+        }
+    };
+
     exportBtn.onclick = () => {
         const quality = exportQualityEl.value;
         const format = exportFormatEl.value;
-        renderer.startExport(quality, format);
+
+        setExportUI(true);
+
+        renderer.startExport(quality, format, (success) => {
+            // Callback on complete or cancel
+            setExportUI(false);
+            if (!success) {
+                console.log("Export cancelled by user.");
+            }
+        });
+    };
+
+    cancelExportBtn.onclick = () => {
+        renderer.cancelExport();
+        // UI reset handled by startExport callback, but we can force it just in case
+        // actually renderer.cancelExport() sets flag, which triggers onstop, which fires callback false.
+        // So setExportUI(false) will happen there.
     };
 
     // Initial UI Sync
@@ -633,9 +664,43 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update Position logic
             const updatePosition = () => {
                 const rect = header.getBoundingClientRect();
-                list.style.top = `${rect.bottom + 4}px`;
-                list.style.left = `${rect.left}px`;
-                list.style.width = `${rect.width}px`;
+                const viewportHeight = window.innerHeight;
+
+                // Allow some padding
+                const padding = 10;
+                const spaceBelow = viewportHeight - rect.bottom - padding;
+                const spaceAbove = rect.top - padding;
+
+                // Reset styles
+                list.style.bottom = 'auto';
+                list.style.top = 'auto';
+                list.style.maxHeight = '300px'; // Reset to default max
+
+                // Logic: Prefer Down if fits, or if Down has MORE space than Up (and neither fits perfectly)
+                // But we want to avoid clipping. 
+
+                if (spaceBelow >= 300 || spaceBelow >= spaceAbove) {
+                    // Down
+                    list.style.top = `${rect.bottom + 4}px`;
+                    list.style.left = `${rect.left}px`;
+                    list.style.width = `${rect.width}px`;
+
+                    // Constrain Height
+                    if (spaceBelow < 300) {
+                        list.style.maxHeight = `${spaceBelow}px`;
+                    }
+                } else {
+                    // Up (Flip)
+                    const bottomPos = viewportHeight - rect.top + 4;
+                    list.style.bottom = `${bottomPos}px`;
+                    list.style.left = `${rect.left}px`;
+                    list.style.width = `${rect.width}px`;
+
+                    // Constrain Height
+                    if (spaceAbove < 300) {
+                        list.style.maxHeight = `${spaceAbove}px`;
+                    }
+                }
             };
 
             // Header Click
@@ -662,13 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            // Handle scroll/resize to close dropdowns
-            window.addEventListener('scroll', () => {
-                if (!list.classList.contains('hidden')) {
-                    list.classList.add('hidden');
-                    header.classList.remove('active');
-                }
-            }, true); // Capture phase to catch all scrolls
+            // Handle resize to close dropdowns
             window.addEventListener('resize', () => {
                 if (!list.classList.contains('hidden')) {
                     list.classList.add('hidden');
@@ -692,7 +751,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Global Click to Close
-        document.addEventListener('click', () => {
+        document.addEventListener('click', (e) => {
+            // Ignore if clicking inside a custom select (list or header)
+            if (e.target.closest('.custom-select-list') || e.target.closest('.custom-select-header')) return;
+
             document.querySelectorAll('.custom-select-list').forEach(l => l.classList.add('hidden'));
             document.querySelectorAll('.custom-select-header').forEach(h => h.classList.remove('active'));
         });

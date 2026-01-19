@@ -730,3 +730,137 @@ canvas:active {
     text-align: center;
     margin-top: -0.25rem;
 }
+
+/* Export Overlay */
+#export-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    /* Light glassmorphism */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    transition: opacity 0.3s ease;
+}
+
+.export-content {
+    background: #ffffff;
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    /* Hardcoded nice radius */
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06),
+        0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    /* Shadow-xl equivalent */
+    text-align: center;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    min-width: 280px;
+    transform: translateY(0);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.export-content h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+/* Spinner Animation */
+.spinner {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Disabled State */
+aside.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: grayscale(100%);
+    transition: all 0.3s ease;
+}
+
+/* Danger Button for Cancel */
+.danger-btn {
+    background-color: #fff;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.danger-btn:hover {
+    background-color: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.danger-btn:active {
+    transform: translateY(1px);
+}
+
+/* Ensure preview area is relative for absolute overlay */
+.preview-area {
+    position: relative;
+}

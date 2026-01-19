@@ -944,10 +944,31 @@ class CanvasRenderer {
         this.draw();
     }
 
-    startExport(quality, format, onProgress) {
+    cancelExport() {
+        if (!this.isExporting) return;
+        this.exportCancelFlag = true;
+
+        // Stop Recording
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+        }
+
+        // Stop Playback
+        this.stop();
+
+        // Immediate state restoration (in case recorder onstop is delayed or skipped if not started)
+        // But logic is usually cleaner if we rely on onstop?
+        // Risky if MediaRecorder throws or doesn't fire onstop properly.
+        // Let's rely on onstop but ensure it handles the flag correctly.
+        // If logic is robust, onstop will fire after stop().
+        console.log("Export Cancelled");
+    }
+
+    startExport(quality, format, onComplete) {
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
         if (this.isExporting) return;
         this.isExporting = true;
+        this.exportCancelFlag = false;
 
         // 1. Determine Resolution (Respecting Aspect Ratio)
         const aspect = this.canvas.width / this.canvas.height;
@@ -1029,12 +1050,6 @@ class CanvasRenderer {
 
         this.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) this.recordedChunks.push(e.data); };
         this.mediaRecorder.onstop = () => {
-            const blob = new Blob(this.recordedChunks, { type: mimeType.split(';')[0] });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.style.display = 'none'; a.href = url;
-            a.download = `presenta-export.${ext}`;
-            document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
-
             // Restore Original State
             this.config.scale = 1;
             this.canvas.width = origCanvasW;
@@ -1045,6 +1060,20 @@ class CanvasRenderer {
             this.updateFramePosition();
             this.isExporting = false;
             this.draw();
+
+            if (this.exportCancelFlag) {
+                // Cancelled - Do not download
+                if (onComplete) onComplete(false); // false = cancelled
+                return;
+            }
+
+            const blob = new Blob(this.recordedChunks, { type: mimeType.split(';')[0] });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.style.display = 'none'; a.href = url;
+            a.download = `presenta-export.${ext}`;
+            document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+
+            if (onComplete) onComplete(true); // true = complete
         };
 
         this.mediaRecorder.start();

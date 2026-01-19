@@ -308,6 +308,27 @@
 
             <section class="preview-area">
                 <canvas id="main-canvas"></canvas>
+                <!-- Export Overlay -->
+                <div id="export-overlay" class="hidden">
+                    <div class="export-content">
+                        <div class="spinner">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                        <h3>Exporting Video...</h3>
+                        <p style="margin-top: -1rem; font-size: 0.9rem; color: var(--text-secondary);">Creating your
+                            masterpiece</p>
+                        <button id="cancel-export-btn" class="danger-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Cancel Export
+                        </button>
+                    </div>
+                </div>
             </section>
         </main>
 
