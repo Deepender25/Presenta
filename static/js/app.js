@@ -363,16 +363,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Custom Timeline Logic
     // Drag Helper
+    // Custom Timeline Logic
     // Drag Helper
+    const getEventX = (e) => {
+        return e.touches ? e.touches[0].clientX : e.clientX;
+    };
+
     const startDrag = (initialX, index, dot) => {
         const rect = timelineSlider.getBoundingClientRect();
         let hasMoved = false;
 
         const onMove = (moveEvent) => {
-            const dx = Math.abs(moveEvent.clientX - initialX);
+            const clientX = getEventX(moveEvent);
+            const dx = Math.abs(clientX - initialX);
             if (dx > 2) hasMoved = true; // Threshold for movement
 
-            let newRatio = (moveEvent.clientX - rect.left) / rect.width;
+            let newRatio = (clientX - rect.left) / rect.width;
             if (newRatio < 0.01) newRatio = 0.01;
             if (newRatio > 0.99) newRatio = 0.99;
 
@@ -389,6 +395,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const onUp = () => {
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
 
             // Only re-render if actually moved, to preserve DOM for DoubleClick
             if (hasMoved) {
@@ -402,6 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
     };
 
     const renderTimeline = () => {
@@ -430,10 +440,18 @@ document.addEventListener('DOMContentLoaded', () => {
             dot.style.left = `${stopVal * 100}%`;
             dot.title = `Stop at ${Math.round(stopVal * 100)}% (Drag to move, DblClick to remove)`;
 
-            // Drag Logic
+            // Drag Logic (Mouse)
             dot.onmousedown = (e) => {
                 e.stopPropagation();
                 startDrag(e.clientX, index, dot);
+            };
+
+            // Drag Logic (Touch)
+            dot.ontouchstart = (e) => {
+                e.stopPropagation();
+                // Prevent default to avoid scrolling page while dragging dot
+                if (e.cancelable) e.preventDefault();
+                startDrag(e.touches[0].clientX, index, dot);
             };
 
             // Hover Preview
@@ -452,11 +470,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    timelineSlider.onmousedown = (e) => {
+    const handleSliderInteraction = (clientX, e) => {
         // Add stop if clicked on track (not on an existing dot)
+        // Note: e.target check is done by ensuring listener is on slider and stops stopPropagation
         if (!e.target.classList.contains('timeline-stop')) {
             const rect = timelineSlider.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
+            const clickX = clientX - rect.left;
             let ratio = clickX / rect.width;
 
             // Avoid adding too close to edges
@@ -479,9 +498,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const dot = customDots[newIndex];
             if (dot) {
                 // Pass current mouse position to startDrag
-                startDrag(e.clientX, newIndex, dot);
+                startDrag(clientX, newIndex, dot);
             }
         }
+    };
+
+    timelineSlider.onmousedown = (e) => {
+        handleSliderInteraction(e.clientX, e);
+    };
+
+    timelineSlider.ontouchstart = (e) => {
+        // Prevent default to stop scrolling if tapping on slider
+        // But maybe we want to allow scrolling if just tapping? 
+        // Usually sliders consume touch.
+        if (e.cancelable) e.preventDefault();
+        handleSliderInteraction(e.touches[0].clientX, e);
     };
 
     // Hover preview?

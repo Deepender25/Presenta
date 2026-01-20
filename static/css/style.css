@@ -912,9 +912,94 @@ aside.disabled {
         background-color: #f9fafb;
     }
 
-    /* Adjust controls for touch targets if needed */
+    /* Adjust controls for touch targets */
     .control-group h3 {
         margin-top: 0.5rem;
+    }
+
+    /* --- Touch Optimization --- */
+    button,
+    select,
+    input[type="text"],
+    input[type="number"],
+    .file-upload-btn,
+    .custom-select-header {
+        padding: 0.75rem 1rem;
+        /* Larger touch area */
+        font-size: 0.95rem;
+        /* Readable text */
+        min-height: 44px;
+        /* Apple Human Interface Guidelines */
+    }
+
+    /* Segmented Control Buttons */
+    .segmented-control .toggle-btn {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    /* Sliders (Range Inputs) */
+    input[type="range"] {
+        height: 6px;
+        /* Thicker track */
+        margin: 0.75rem 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        height: 24px;
+        /* Big thumb */
+        width: 24px;
+        margin-top: -9px;
+        /* Center on 6px track: (6 - 24) / 2 */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Collapsible Headers */
+    .collapsible-header {
+        padding: 0.75rem 0;
+    }
+
+    /* Spacing between inputs */
+    .input-wrapper {
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Color picker row */
+    .color-input-row {
+        padding: 0.4rem;
+        height: 44px;
+    }
+
+    input[type="color"] {
+        height: 32px;
+        width: 40px;
+    }
+
+    /* --- Timeline Slider Touch Optimization --- */
+    .timeline-slider.horizontal {
+        height: 48px;
+        /* Much taller hit area */
+        cursor: pointer;
+    }
+
+    .timeline-slider.horizontal .timeline-track {
+        height: 12px;
+        /* Thicker track */
+        border-radius: 6px;
+    }
+
+    .timeline-slider.horizontal .timeline-stop {
+        width: 24px;
+        /* Larger dots */
+        height: 24px;
+        border-width: 3px;
+    }
+
+    /* Adjust fixed stops to match new size (visually smaller but accessible) */
+    .timeline-stop.fixed {
+        width: 16px;
+        height: 16px;
     }
 }
 
