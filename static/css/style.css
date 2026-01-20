@@ -864,3 +864,71 @@ aside.disabled {
 .preview-area {
     position: relative;
 }
+
+/* =========================================
+   Responsive Design (Mobile & Tablet)
+   ========================================= */
+
+@media (max-width: 900px) {
+    body {
+        height: 100vh;
+        overflow: hidden;
+        /* Disable page scrolling, we scroll sidebar only */
+    }
+
+    main {
+        flex-direction: column-reverse;
+        /* Controls bottom, Preview top */
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Sidebar becomes bottom controls, scrollable */
+    aside {
+        width: 100%;
+        flex: 1;
+        /* Take remaining space */
+        min-height: 0;
+        /* Allow shrinking */
+        border-right: none;
+        border-top: 1px solid var(--border);
+        overflow-y: auto;
+        /* Scroll within sidebar */
+        padding-bottom: 2rem;
+        /* Extra padding for bottom */
+    }
+
+    /* Preview Area sits fixed at top */
+    .preview-area {
+        height: 45vh;
+        /* Fixed height */
+        flex: 0 0 45vh;
+        /* Don't grow or shrink */
+        min-height: 300px;
+        width: 100%;
+        padding: 1rem;
+        z-index: 10;
+        /* Ensure above if needed */
+        background-color: #f9fafb;
+    }
+
+    /* Adjust controls for touch targets if needed */
+    .control-group h3 {
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .preview-area {
+        height: 50vh;
+        min-height: 300px;
+        padding: 0.5rem;
+    }
+
+    .header {
+        padding: 0 1rem;
+    }
+
+    /* Stack row inputs vertically on very small screens if needed */
+    /* currently .row-inputs are flex row, let's keep them unless too squished */
+}
