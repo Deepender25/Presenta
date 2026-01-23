@@ -865,6 +865,16 @@ aside.disabled {
     position: relative;
 }
 
+/* Mobile Tab Bar (Hidden by default on Desktop) */
+.mobile-tab-bar {
+    display: none;
+}
+
+/* Tab Sections (Desktop: Always show) */
+.tab-section {
+    display: block;
+}
+
 /* =========================================
    Responsive Design (Mobile & Tablet)
    ========================================= */
@@ -894,17 +904,87 @@ aside.disabled {
         border-top: 1px solid var(--border);
         overflow-y: auto;
         /* Scroll within sidebar */
-        padding-bottom: 2rem;
-        /* Extra padding for bottom */
+        padding-bottom: 80px;
+        /* Extra padding for tab bar + safe area */
     }
+
+    /* Mobile Tab Bar */
+    .mobile-tab-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: #fff;
+        border-top: 1px solid var(--border);
+        z-index: 50;
+        justify-content: space-around;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: var(--text-secondary);
+        font-size: 0.7rem;
+        cursor: pointer;
+        padding: 4px 0;
+        transition: color 0.2s;
+    }
+
+    .tab-btn svg {
+        transition: transform 0.2s;
+    }
+
+    .tab-btn.active {
+        color: var(--accent);
+        font-weight: 600;
+    }
+
+    .tab-btn.active svg {
+        transform: translateY(-2px);
+    }
+
+    /* Tab Content Visibility Logic for Mobile */
+    .tab-section {
+        display: none;
+        /* Hide all by default */
+        animation: fadeIn 0.3s ease;
+    }
+
+    .tab-section.active {
+        display: block;
+        /* Show active only */
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
 
     /* Preview Area sits fixed at top */
     .preview-area {
-        height: 45vh;
-        /* Fixed height */
-        flex: 0 0 45vh;
+        height: 40vh;
+        /* Fixed height, slightly smaller to give more room to controls */
+        flex: 0 0 40vh;
         /* Don't grow or shrink */
-        min-height: 300px;
+        min-height: 250px;
         width: 100%;
         padding: 1rem;
         z-index: 10;
@@ -1005,15 +1085,20 @@ aside.disabled {
 
 @media (max-width: 600px) {
     .preview-area {
-        height: 50vh;
-        min-height: 300px;
+        height: 45vh;
+        /* Slightly more height on very small screens? Actually less is better for controls.
+           Let's keep 40% or maybe 35% if screen is really tiny?s
+           Defaulting to 40vh from above is fine.
+        */
+        min-height: 250px;
         padding: 0.5rem;
+    }
+
+    .tab-btn span {
+        font-size: 0.65rem;
     }
 
     .header {
         padding: 0 1rem;
     }
-
-    /* Stack row inputs vertically on very small screens if needed */
-    /* currently .row-inputs are flex row, let's keep them unless too squished */
 }

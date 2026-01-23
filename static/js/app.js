@@ -845,4 +845,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     setupTouchRanges();
+
+    // --- Mobile Tab Navigation ---
+    const setupMobileTabs = () => {
+        const tabBtns = document.querySelectorAll('.mobile-tab-bar .tab-btn');
+        const tabSections = document.querySelectorAll('.tab-section');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.dataset.tab;
+
+                // Update Buttons
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update Sections
+                tabSections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+
+                // Scroll sidebar to top when switching tabs
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.scrollTop = 0;
+            });
+        });
+    };
+    setupMobileTabs();
 });

@@ -26,284 +26,336 @@
 
         <main>
             <aside id="sidebar">
-                <!-- Upload Section -->
-                <div class="control-group">
-                    <h3>Content</h3>
-                    <div class="file-drop-zone" id="drop-zone">
-                        <p>Click or Drop Image/Video Here</p>
-                        <input type="file" id="file-input" accept="image/*,video/*" class="hidden">
-                    </div>
-                </div>
-
-                <!-- Device Settings -->
-                <div class="control-group">
-                    <h3>Device</h3>
-                    <div class="input-wrapper">
-                        <label>Frame Type</label>
-                        <select id="device-type">
-                            <option value="none">No Device (Screen Only)</option>
-                            <option value="browser" selected>Browser Window</option>
-                            <option value="macbook">Macbook Air/Pro</option>
-                            <option value="ipad">iPad</option>
-                            <option value="iphone">iPhone</option>
-                        </select>
-                    </div>
-
-                    <div class="input-wrapper" id="orientation-wrapper">
-                        <label>Device Orientation</label>
-                        <div class="segmented-control">
-                            <button class="toggle-btn active" data-value="portrait" id="btn-portrait">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                                </svg>
-                                Portrait
-                            </button>
-                            <button class="toggle-btn" data-value="landscape" id="btn-landscape">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
-                                    <line x1="12" y1="12" x2="12.01" y2="12"></line>
-                                </svg>
-                                Landscape
-                            </button>
+                <!-- Tab: Content -->
+                <div id="tab-content" class="tab-section active">
+                    <!-- Upload Section -->
+                    <div class="control-group">
+                        <h3>Content</h3>
+                        <div class="file-drop-zone" id="drop-zone">
+                            <p>Click or Drop Image/Video Here</p>
+                            <input type="file" id="file-input" accept="image/*,video/*" class="hidden">
                         </div>
                     </div>
 
-                    <div class="input-wrapper collapsible-wrapper hidden" id="radius-wrapper">
-                        <div class="collapsible-header" id="radius-header">
-                            <label style="cursor: pointer;">Corner Radius <span id="radius-val"
-                                    style="color: var(--text-secondary); font-weight: normal; margin-left: 4px;">0</span>px</label>
-                            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
-                        <div class="collapsible-content hidden" id="radius-content">
-                            <input type="range" id="corner-radius" min="0" max="100" value="0">
-                        </div>
-                    </div>
-
-                    <div class="input-wrapper collapsible-wrapper" id="device-size-wrapper">
-                        <div class="collapsible-header" id="device-size-header">
-                            <label style="cursor: pointer;">Device Size</label>
-                            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
-                        <div class="collapsible-content hidden" id="device-size-content">
-                            <div class="row-inputs">
-                                <div class="col">
-                                    <label class="sub-label">WIDTH</label>
-                                    <input type="number" id="frame-width" value="1000">
-                                </div>
-                                <div class="col">
-                                    <label class="sub-label">HEIGHT</label>
-                                    <input type="number" id="frame-height" value="800">
-                                </div>
-                            </div>
-                            <div class="row-inputs" style="margin-top: 0.5rem;">
-                                <button id="fit-content-btn" class="secondary small-btn" style="flex: 1; display: none;"
-                                    title="Match frame size to content aspect ratio">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                        style="margin-right: 4px;">
-                                        <polyline points="4 14 10 14 10 20"></polyline>
-                                        <polyline points="20 10 14 10 14 4"></polyline>
-                                        <line x1="14" y1="10" x2="21" y2="3"></line>
-                                        <line x1="3" y1="21" x2="10" y2="14"></line>
-                                    </svg>
-                                    Fit Content
-                                </button>
-                                <button id="reset-size-btn" class="secondary small-btn" style="flex: 1;">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                        style="margin-right: 4px;">
-                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12" />
-                                    </svg>
-                                    Reset
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Scale Content Removed -->
-                </div>
-
-                <!-- Shadow Settings -->
-                <!-- Shadow Settings -->
-                <div class="control-group">
-                    <div class="input-wrapper collapsible-wrapper" id="shadow-wrapper">
-                        <div class="collapsible-header" id="shadow-header">
-                            <label style="cursor: pointer;">Shadow Settings</label>
-                            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
-                        <div class="collapsible-content hidden" id="shadow-content">
-                            <div class="input-wrapper">
-                                <label>Size <span id="shadow-size-val">1.0x</span></label>
-                                <input type="range" id="shadow-size" min="0" max="5" step="0.1" value="1">
-                            </div>
-                            <div class="input-wrapper">
-                                <label>Opacity <span id="shadow-opacity-val">1.0x</span></label>
-                                <input type="range" id="shadow-opacity" min="0" max="2" step="0.1" value="1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Canvas Settings -->
-                <div class="control-group">
-                    <h3>Canvas & Background</h3>
-                    <div class="input-wrapper">
-                        <label>Canvas Aspect Ratio</label>
-                        <div class="segmented-control" id="aspect-ratio-group">
-                            <button class="toggle-btn" data-value="1:1">1:1</button>
-                            <button class="toggle-btn active" data-value="16:9">16:9</button>
-                            <button class="toggle-btn" data-value="9:16">9:16</button>
-                        </div>
-                        <select id="aspect-ratio" class="hidden">
-                            <option value="16:9" selected>16:9 (Landscape)</option>
-                            <option value="1:1">1:1 (Square)</option>
-                            <option value="9:16">9:16 (Portrait)</option>
-                            <option value="4:3">4:3</option>
-                        </select>
-                    </div>
-
-                    <!-- Background Color -->
-                    <div class="input-wrapper">
-                        <label>Background Color</label>
-                        <div class="color-input-row">
-                            <input type="color" id="bg-color" value="#ECECEC">
-                            <input type="text" id="bg-color-text" value="#ECECEC" spellcheck="false" maxlength="7">
-                            <button id="bg-color-reset-btn" class="icon-btn" title="Reset Color">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                                    <path d="M3 3v5h5"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Background Image -->
-                    <div class="input-wrapper">
-                        <label>Background Image (Optional)</label>
-                        <div class="row-inputs" style="gap: 0.5rem;">
-                            <div class="file-upload-btn" id="bg-image-upload-btn">
-                                <span id="bg-image-filename">Upload Image...</span>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                <input type="file" id="bg-image-input" accept="image/*" class="hidden">
-                            </div>
-                            <button id="bg-image-remove-btn" class="icon-btn danger">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path
-                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Animation Settings -->
-                <div class="control-group">
-                    <h3>Animation Settings</h3>
-
-                    <div class="input-wrapper">
-                        <label>Scroll Behavior</label>
-                        <select id="animation-style">
-                            <option value="linear" selected>Linear Smooth (Constant)</option>
-                            <option value="human">Human Step (Natural Pauses)</option>
-                        </select>
-                    </div>
-
-                    <!-- Human Settings Sub-options -->
-                    <div id="human-settings-container">
+                    <!-- Device Settings -->
+                    <div class="control-group">
+                        <h3>Device</h3>
                         <div class="input-wrapper">
-                            <div class="segmented-control" id="human-mode-group">
-                                <button class="toggle-btn active" data-value="fixed">Fixed %</button>
-                                <button class="toggle-btn" data-value="custom">Custom Stop</button>
+                            <label>Frame Type</label>
+                            <select id="device-type">
+                                <option value="none">No Device (Screen Only)</option>
+                                <option value="browser" selected>Browser Window</option>
+                                <option value="macbook">Macbook Air/Pro</option>
+                                <option value="ipad">iPad</option>
+                                <option value="iphone">iPhone</option>
+                            </select>
+                        </div>
+
+                        <div class="input-wrapper" id="orientation-wrapper">
+                            <label>Device Orientation</label>
+                            <div class="segmented-control">
+                                <button class="toggle-btn active" data-value="portrait" id="btn-portrait">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                    </svg>
+                                    Portrait
+                                </button>
+                                <button class="toggle-btn" data-value="landscape" id="btn-landscape">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="12" y1="12" x2="12.01" y2="12"></line>
+                                    </svg>
+                                    Landscape
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Interval Settings -->
-                        <div class="input-wrapper" id="interval-settings">
-                            <label>Scroll Increment: <span id="increment-val">25%</span></label>
-                            <input type="range" id="scroll-increment" min="10" max="100" step="5" value="25">
-                            <div class="help-text"
-                                style="display: flex; justify-content: space-between; margin-top: 0;">
-                                <span>10%</span>
-                                <span>100%</span>
+                        <div class="input-wrapper collapsible-wrapper hidden" id="radius-wrapper">
+                            <div class="collapsible-header" id="radius-header">
+                                <label style="cursor: pointer;">Corner Radius <span id="radius-val"
+                                        style="color: var(--text-secondary); font-weight: normal; margin-left: 4px;">0</span>px</label>
+                                <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="collapsible-content hidden" id="radius-content">
+                                <input type="range" id="corner-radius" min="0" max="100" value="0">
                             </div>
                         </div>
 
-                        <!-- Custom Stops Settings -->
-                        <div class="input-wrapper hidden" id="custom-stops-settings">
-                            <!-- <label>Keyframes <span class="sub-text">(Double click to remove)</span></label> -->
-                            <div class="timeline-slider horizontal" id="timeline-slider">
-                                <div class="timeline-track"></div>
-                                <div class="timeline-progress" id="timeline-progress"></div>
-                                <!-- Stops here -->
+                        <div class="input-wrapper collapsible-wrapper" id="device-size-wrapper">
+                            <div class="collapsible-header" id="device-size-header">
+                                <label style="cursor: pointer;">Device Size</label>
+                                <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
                             </div>
-                            <div class="help-text">Click to add. Double-click to remove.</div>
+                            <div class="collapsible-content hidden" id="device-size-content">
+                                <div class="row-inputs">
+                                    <div class="col">
+                                        <label class="sub-label">WIDTH</label>
+                                        <input type="number" id="frame-width" value="1000">
+                                    </div>
+                                    <div class="col">
+                                        <label class="sub-label">HEIGHT</label>
+                                        <input type="number" id="frame-height" value="800">
+                                    </div>
+                                </div>
+                                <div class="row-inputs" style="margin-top: 0.5rem;">
+                                    <button id="fit-content-btn" class="secondary small-btn"
+                                        style="flex: 1; display: none;"
+                                        title="Match frame size to content aspect ratio">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" style="margin-right: 4px;">
+                                            <polyline points="4 14 10 14 10 20"></polyline>
+                                            <polyline points="20 10 14 10 14 4"></polyline>
+                                            <line x1="14" y1="10" x2="21" y2="3"></line>
+                                            <line x1="3" y1="21" x2="10" y2="14"></line>
+                                        </svg>
+                                        Fit Content
+                                    </button>
+                                    <button id="reset-size-btn" class="secondary small-btn" style="flex: 1;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" style="margin-right: 4px;">
+                                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12" />
+                                        </svg>
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="input-wrapper">
-                        <label>Start Hold Time: <span id="hold-start-val">1s</span></label>
-                        <input type="range" id="hold-start" value="1" min="0" max="10" step="0.5">
-                    </div>
-                    <div class="input-wrapper">
-                        <label>Total Duration: <span id="duration-val">10s</span></label>
-                        <input type="range" id="duration" min="1" max="60" value="10">
                     </div>
                 </div>
 
-                <!-- Export -->
-                <div class="control-group">
-                    <h3>Export Settings</h3>
-                    <div class="row-inputs">
-                        <div class="col">
-                            <label class="sub-label">Quality</label>
-                            <select id="export-quality">
-                                <option>4K (UHD)</option>
-                                <option>1080p (FHD)</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label class="sub-label">Format</label>
-                            <select id="export-format">
-                                <option>MP4</option>
-                                <option>WEBM</option>
-                            </select>
+                <!-- Tab: Style -->
+                <div id="tab-style" class="tab-section hidden-mobile">
+                    <!-- Shadow Settings -->
+                    <div class="control-group">
+                        <div class="input-wrapper collapsible-wrapper" id="shadow-wrapper">
+                            <div class="collapsible-header" id="shadow-header">
+                                <label style="cursor: pointer;">Shadow Settings</label>
+                                <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="collapsible-content hidden" id="shadow-content">
+                                <div class="input-wrapper">
+                                    <label>Size <span id="shadow-size-val">1.0x</span></label>
+                                    <input type="range" id="shadow-size" min="0" max="5" step="0.1" value="1">
+                                </div>
+                                <div class="input-wrapper">
+                                    <label>Opacity <span id="shadow-opacity-val">1.0x</span></label>
+                                    <input type="range" id="shadow-opacity" min="0" max="2" step="0.1" value="1">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <button id="play-btn" class="outline-btn">
-                        <span class="btn-text">Preview Animation</span>
+                    <!-- Canvas Settings -->
+                    <div class="control-group">
+                        <h3>Canvas & Background</h3>
+                        <div class="input-wrapper">
+                            <label>Canvas Aspect Ratio</label>
+                            <div class="segmented-control" id="aspect-ratio-group">
+                                <button class="toggle-btn" data-value="1:1">1:1</button>
+                                <button class="toggle-btn active" data-value="16:9">16:9</button>
+                                <button class="toggle-btn" data-value="9:16">9:16</button>
+                            </div>
+                            <select id="aspect-ratio" class="hidden">
+                                <option value="16:9" selected>16:9 (Landscape)</option>
+                                <option value="1:1">1:1 (Square)</option>
+                                <option value="9:16">9:16 (Portrait)</option>
+                                <option value="4:3">4:3</option>
+                            </select>
+                        </div>
+
+                        <!-- Background Color -->
+                        <div class="input-wrapper">
+                            <label>Background Color</label>
+                            <div class="color-input-row">
+                                <input type="color" id="bg-color" value="#ECECEC">
+                                <input type="text" id="bg-color-text" value="#ECECEC" spellcheck="false" maxlength="7">
+                                <button id="bg-color-reset-btn" class="icon-btn" title="Reset Color">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                        <path d="M3 3v5h5"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Background Image -->
+                        <div class="input-wrapper">
+                            <label>Background Image (Optional)</label>
+                            <div class="row-inputs" style="gap: 0.5rem;">
+                                <div class="file-upload-btn" id="bg-image-upload-btn">
+                                    <span id="bg-image-filename">Upload Image...</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <input type="file" id="bg-image-input" accept="image/*" class="hidden">
+                                </div>
+                                <button id="bg-image-remove-btn" class="icon-btn danger">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path
+                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Motion -->
+                <div id="tab-motion" class="tab-section hidden-mobile">
+                    <!-- Animation Settings -->
+                    <div class="control-group">
+                        <h3>Animation Settings</h3>
+
+                        <div class="input-wrapper">
+                            <label>Scroll Behavior</label>
+                            <select id="animation-style">
+                                <option value="linear" selected>Linear Smooth (Constant)</option>
+                                <option value="human">Human Step (Natural Pauses)</option>
+                            </select>
+                        </div>
+
+                        <!-- Human Settings Sub-options -->
+                        <div id="human-settings-container">
+                            <div class="input-wrapper">
+                                <div class="segmented-control" id="human-mode-group">
+                                    <button class="toggle-btn active" data-value="fixed">Fixed %</button>
+                                    <button class="toggle-btn" data-value="custom">Custom Stop</button>
+                                </div>
+                            </div>
+
+                            <!-- Interval Settings -->
+                            <div class="input-wrapper" id="interval-settings">
+                                <label>Scroll Increment: <span id="increment-val">25%</span></label>
+                                <input type="range" id="scroll-increment" min="10" max="100" step="5" value="25">
+                                <div class="help-text"
+                                    style="display: flex; justify-content: space-between; margin-top: 0;">
+                                    <span>10%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+
+                            <!-- Custom Stops Settings -->
+                            <div class="input-wrapper hidden" id="custom-stops-settings">
+                                <!-- <label>Keyframes <span class="sub-text">(Double click to remove)</span></label> -->
+                                <div class="timeline-slider horizontal" id="timeline-slider">
+                                    <div class="timeline-track"></div>
+                                    <div class="timeline-progress" id="timeline-progress"></div>
+                                    <!-- Stops here -->
+                                </div>
+                                <div class="help-text">Click to add. Double-click to remove.</div>
+                            </div>
+                        </div>
+
+                        <div class="input-wrapper">
+                            <label>Start Hold Time: <span id="hold-start-val">1s</span></label>
+                            <input type="range" id="hold-start" value="1" min="0" max="10" step="0.5">
+                        </div>
+                        <div class="input-wrapper">
+                            <label>Total Duration: <span id="duration-val">10s</span></label>
+                            <input type="range" id="duration" min="1" max="60" value="10">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Export -->
+                <div id="tab-export" class="tab-section hidden-mobile">
+                    <!-- Export -->
+                    <div class="control-group">
+                        <h3>Export Settings</h3>
+                        <div class="row-inputs">
+                            <div class="col">
+                                <label class="sub-label">Quality</label>
+                                <select id="export-quality">
+                                    <option>4K (UHD)</option>
+                                    <option>1080p (FHD)</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label class="sub-label">Format</label>
+                                <select id="export-format">
+                                    <option>MP4</option>
+                                    <option>WEBM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="play-btn" class="outline-btn">
+                            <span class="btn-text">Preview Animation</span>
+                        </button>
+                        <button id="export-btn" class="primary-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export Video
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Tab Bar -->
+                <nav class="mobile-tab-bar">
+                    <button class="tab-btn active" data-tab="tab-content">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <rect x="7" y="7" width="3" height="9"></rect>
+                            <rect x="14" y="7" width="3" height="5"></rect>
+                        </svg>
+                        <span>Content</span>
                     </button>
-                    <button id="export-btn" class="primary-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    <button class="tab-btn" data-tab="tab-style">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                            <path d="M2 12h20"></path>
+                        </svg>
+                        <span>Style</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-motion">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                        </svg>
+                        <span>Motion</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-export">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        Export Video
+                        <span>Export</span>
                     </button>
-                </div>
+                </nav>
             </aside>
 
             <section class="preview-area">
