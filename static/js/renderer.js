@@ -172,9 +172,18 @@ class CanvasRenderer {
         else if (handle === 'w' || handle === 'e') this.canvas.style.cursor = 'ew-resize';
     }
 
-    getHitHandle(x, y) { /* ... same ... */
+    getHitHandle(x, y) {
         const { width, height, x: fx, y: fy } = this.frame;
-        const margin = 20;
+
+        // Dynamic Margin Calculation for Touch Scaling
+        // Ensure visual target is at least 40px on screen
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        // Use a minimum of 20 canvas pixels, but scale up if display is small
+        // Example: Canvas 1000px, Screen 300px. Scale = 3.3.
+        // Want 40px screen target -> 40 * 3.3 = 132 canvas pixels margin. 
+        const margin = Math.max(20, 40 * scaleX);
+
         if (Math.abs(x - (fx)) < margin && Math.abs(y - (fy)) < margin) return 'nw';
         if (Math.abs(x - (fx + width)) < margin && Math.abs(y - (fy)) < margin) return 'ne';
         if (Math.abs(x - (fx + width)) < margin && Math.abs(y - (fy + height)) < margin) return 'se';
