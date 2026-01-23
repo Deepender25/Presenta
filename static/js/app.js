@@ -420,7 +420,8 @@ document.addEventListener('DOMContentLoaded', () => {
         existingDots.forEach(d => d.remove());
 
         // Render Fixed Stops (0% and 100%)
-        [0, 1].forEach(pos => {
+        // Render Fixed Stops (0% only)
+        [0].forEach(pos => {
             const dot = document.createElement('div');
             dot.className = 'timeline-stop fixed';
             dot.style.left = `${pos * 100}%`;
