@@ -507,13 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleSliderInteraction(e.clientX, e);
     };
 
-    timelineSlider.ontouchstart = (e) => {
-        // Prevent default to stop scrolling if tapping on slider
-        // But maybe we want to allow scrolling if just tapping? 
-        // Usually sliders consume touch.
-        if (e.cancelable) e.preventDefault();
-        handleSliderInteraction(e.touches[0].clientX, e);
-    };
+    // timelineSlider.ontouchstart removed to prevent jump on tap (Drag Only via dots)
 
     // Hover preview?
     timelineSlider.onmousemove = (e) => {
@@ -792,4 +786,63 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     setupCustomDropdowns();
+
+    // Fix for Touch Sliders: Only Drag, No Jump
+    const setupTouchRanges = () => {
+        const ranges = document.querySelectorAll('input[type="range"]');
+        ranges.forEach(range => {
+            range.addEventListener('touchstart', (e) => {
+                const rect = range.getBoundingClientRect();
+                const touchX = e.touches[0].clientX - rect.left;
+
+                // Calculate current thumb position
+                const min = parseFloat(range.min) || 0;
+                const max = parseFloat(range.max) || 100;
+                const val = parseFloat(range.value);
+                const ratio = (val - min) / (max - min);
+                const thumbX = ratio * rect.width;
+
+                // Threshold to detect if touching the thumb (approx 30px radius)
+                if (Math.abs(touchX - thumbX) > 35) {
+                    // Tapped far from thumb -> Ignore (No Jump)
+                    // Allows scrolling page if not hitting thumb?
+                    return;
+                }
+
+                if (e.cancelable) e.preventDefault(); // Lock scroll
+
+                const update = (moveE) => {
+                    const moveRect = range.getBoundingClientRect();
+                    const moveX = moveE.touches[0].clientX - moveRect.left;
+                    let newRatio = moveX / moveRect.width;
+                    if (newRatio < 0) newRatio = 0;
+                    if (newRatio > 1) newRatio = 1;
+
+                    let newVal = min + (newRatio * (max - min));
+                    const step = parseFloat(range.step);
+                    if (step) {
+                        newVal = Math.round(newVal / step) * step;
+                    }
+
+                    range.value = newVal;
+                    range.dispatchEvent(new Event('input'));
+                };
+
+                const onMove = (moveE) => {
+                    if (moveE.cancelable) moveE.preventDefault();
+                    update(moveE);
+                };
+
+                const onEnd = () => {
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('touchend', onEnd);
+                    range.dispatchEvent(new Event('change'));
+                };
+
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('touchend', onEnd);
+            }, { passive: false });
+        });
+    };
+    setupTouchRanges();
 });

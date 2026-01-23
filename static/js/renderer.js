@@ -56,34 +56,49 @@ class CanvasRenderer {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
             const scaleY = this.canvas.height / rect.height;
-            return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+            let cx, cy;
+            if (e.touches && e.touches.length > 0) {
+                cx = e.touches[0].clientX;
+                cy = e.touches[0].clientY;
+            } else {
+                cx = e.clientX;
+                cy = e.clientY;
+            }
+            return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
         };
 
-        this.canvas.addEventListener('mousedown', (e) => {
+        const handleStart = (e) => {
             if (this.isPlaying) return;
             const pos = getCanvasCoords(e);
             const handle = this.getHitHandle(pos.x, pos.y);
             if (handle) {
+                if (e.cancelable) e.preventDefault(); // Prevent scroll if grabbing handle
                 this.interaction.dragging = true;
                 this.interaction.handle = handle;
                 this.interaction.startX = pos.x;
                 this.interaction.startY = pos.y;
                 this.interaction.startW = this.frame.width;
                 this.interaction.startH = this.frame.height;
-                this.interaction.startRatio = this.frame.width / this.frame.height; // Capture ratio
+                this.interaction.startRatio = this.frame.width / this.frame.height;
                 this.canvas.style.cursor = 'grabbing';
             }
-        });
+        };
 
-        window.addEventListener('mousemove', (e) => {
+        const handleMove = (e) => {
             if (!this.interaction.dragging) {
                 if (!this.isPlaying) {
-                    const pos = getCanvasCoords(e);
-                    const handle = this.getHitHandle(pos.x, pos.y);
-                    this.setCursor(handle);
+                    // Only for mouse pointer change, touch doesn't hover
+                    if (!e.touches) {
+                        const pos = getCanvasCoords(e);
+                        const handle = this.getHitHandle(pos.x, pos.y);
+                        this.setCursor(handle);
+                    }
                 }
                 return;
             }
+
+            if (e.cancelable) e.preventDefault(); // Stop scrolling while dragging
+
             const pos = getCanvasCoords(e);
             const dx = pos.x - this.interaction.startX;
             const dy = pos.y - this.interaction.startY;
@@ -97,18 +112,6 @@ class CanvasRenderer {
             if (handle.includes('s')) newH += dy * 2;
             if (handle.includes('n')) newH -= dy * 2;
 
-            // Aspect Ratio Lock for Corners
-            // Disable native ratio lock if we are snapping to content (implied), 
-            // OR keep it but allow snap override?
-            // If we lock to StartRatio, and StartRatio is "bad", we can't snap to "good" unless we break lock.
-            // Let's DISABLED strict start-ratio lock to allow free resizing which users often expect to fix aspect ratio?
-            // User request: "it is a 1:1 increment or decrement" implying free resize?
-            // But "corners usually scale proportionally".
-            // Compromise: Lock ratio UNLESS we are close to perfect content ratio?
-            // Or just remove the lock entirely to give user full control logic?
-            // "make it like when th efit cntent button is used it changes the sixe...".
-
-            // I'll remove the forced ratio lock for corners to allow the user to drag freely to matching ratio.
             if (handle.length === 2) {
                 // Restore 1:1 Scaling (Locked Ratio)
                 newH = newW / this.interaction.startRatio;
@@ -117,26 +120,11 @@ class CanvasRenderer {
             if (newW < 200) newW = 200;
             if (newH < 200) newH = 200;
 
-            if (newH < 200) newH = 200;
-
-            // Constrain to canvas? Optional but good idea for "cover" bug
             if (newW > this.canvas.width - 40) newW = this.canvas.width - 40;
             if (newH > this.canvas.height - 40) newH = this.canvas.height - 40;
 
             // SNAP TO CONTENT RATIO (Magnetism)
-            // If dragging corners, check if we are close to the perfect content ratio
             if (this.content && !handle.includes('n') && !handle.includes('s') && !handle.includes('e') && !handle.includes('w')) {
-                // Only apply to corners (nw, ne, sw, se) where aspect ratio is fluid
-                // Actually, corners usually lock ratio? 
-                // Line 100: handle.length === 2 (Corner) -> Locks to START Ratio.
-                // We need to override this IF content exists and we are "free resizing" or if the user wants to snap to content.
-                // Wait, current logic locks to START ratio.
-                // If existing ratio is bad, locking keeps it bad.
-                // User wants to CHANGE ratio to perfect one.
-
-                // Let's relax the lock if we hit the "Perfect" zone?
-                // Or simple: Just override height if it matches content ratio.
-
                 let ratio = 1;
                 if (this.contentType === 'video') ratio = this.content.videoWidth / this.content.videoHeight;
                 else ratio = this.content.naturalWidth / this.content.naturalHeight;
@@ -147,10 +135,8 @@ class CanvasRenderer {
 
                 const perfectH = (newW / ratio) + yOffset;
 
-                // Snap Threshold (Magnetism)
                 if (Math.abs(newH - perfectH) < 20) {
                     newH = perfectH;
-                    // Visual feedback? Cursor?
                 }
             }
 
@@ -159,13 +145,23 @@ class CanvasRenderer {
             this.updateFramePosition();
             this.draw();
             if (this.callbacks.onSizeChange) this.callbacks.onSizeChange(this.frame.width, this.frame.height);
-        });
+        };
 
-        window.addEventListener('mouseup', () => {
+        const handleEnd = () => {
             this.interaction.dragging = false;
             this.interaction.handle = null;
             this.canvas.style.cursor = 'default';
-        });
+        };
+
+        // Mouse Events
+        this.canvas.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        // Touch Events
+        this.canvas.addEventListener('touchstart', handleStart, { passive: false });
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleEnd);
     }
 
     setCursor(handle) { /* ... same ... */
