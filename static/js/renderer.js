@@ -342,25 +342,87 @@ class CanvasRenderer {
 
     // ... Load/Play/Stop methods
     async loadContent(file) {
-        const objectUrl = URL.createObjectURL(file);
+        if (this.contentUrl) {
+            URL.revokeObjectURL(this.contentUrl);
+        }
+        this.contentUrl = URL.createObjectURL(file);
+
         if (file.type.startsWith('video')) {
             this.content = document.createElement('video');
-            this.content.src = objectUrl;
+            this.contentType = 'video'; // Set type IMMEDIATELY before any async
             this.content.muted = true;
             this.content.loop = true;
-            await this.content.play(); this.content.pause(); this.content.currentTime = 0;
+            this.content.playsInline = true;
+            this.content.src = this.contentUrl;
 
-            // Auto-set duration
+            // Robust Video Loading: Wait for data and force first frame
+            await new Promise((resolve) => {
+                let resolved = false;
+                const finish = () => {
+                    if (resolved) return;
+                    resolved = true;
+                    resolve();
+                };
+
+                const onLoaded = () => {
+                    this.content.play().then(() => {
+                        this.content.pause();
+                        // Force first frame: seek to 0 and wait for seeked event
+                        this.content.currentTime = 0.001;
+                        const onSeeked = () => {
+                            this.content.removeEventListener('seeked', onSeeked);
+                            this.content.currentTime = 0;
+                            finish();
+                        };
+                        this.content.addEventListener('seeked', onSeeked);
+                        // Fallback timeout
+                        setTimeout(() => {
+                            this.content.removeEventListener('seeked', onSeeked);
+                            finish();
+                        }, 500);
+                    }).catch(e => {
+                        console.warn("Autoplay blocked, forcing seek", e);
+                        // Still try to force first frame via seek
+                        this.content.currentTime = 0.001;
+                        const onSeeked = () => {
+                            this.content.removeEventListener('seeked', onSeeked);
+                            this.content.currentTime = 0;
+                            finish();
+                        };
+                        this.content.addEventListener('seeked', onSeeked);
+                        setTimeout(() => {
+                            this.content.removeEventListener('seeked', onSeeked);
+                            finish();
+                        }, 500);
+                    });
+                };
+
+                if (this.content.readyState >= 2) {
+                    onLoaded();
+                } else {
+                    this.content.onloadeddata = onLoaded;
+                    this.content.onerror = () => finish();
+                }
+
+                // Timeout safety
+                setTimeout(() => {
+                    if (!resolved) {
+                        console.warn("Video load timed out");
+                        finish();
+                    }
+                }, 3000);
+            });
+
+            // Attempt to get duration
             if (this.content.duration && isFinite(this.content.duration)) {
-                const dur = Math.ceil(this.content.duration);
-                this.config.duration = dur;
-                if (this.callbacks.onDurationChange) this.callbacks.onDurationChange(dur);
+                this.config.duration = Math.ceil(this.content.duration);
+                if (this.callbacks.onDurationChange) this.callbacks.onDurationChange(this.config.duration);
             }
 
-            this.contentType = 'video';
+            // contentType already set above
         } else {
             const img = new Image();
-            img.src = objectUrl;
+            img.src = this.contentUrl;
             await new Promise(r => img.onload = r);
             this.content = img;
             this.contentType = 'image';
@@ -369,16 +431,25 @@ class CanvasRenderer {
             this.config.duration = 10;
             if (this.callbacks.onDurationChange) this.callbacks.onDurationChange(10);
         }
-        this.currentTime = 0; this.draw();
+        this.currentTime = 0;
+        this.draw();
+
+        // Auto-fit frame to content if it's the first load or if user prefers?
+        // Let's NOT force auto-fit here to avoid jarring resizing if they already set a device.
+        // But we might want to trigger a draw.
     }
+
     timestamp() { return window.performance.now(); }
+
     play(cb) {
         if (this.isPlaying) return;
         this.previewProgress = null; // Clear preview
-        this.isPlaying = true; this.startTime = null; this.lastFrameTime = this.timestamp();
+        this.isPlaying = true;
+        this.startTime = null;
+        this.lastFrameTime = this.timestamp();
 
-        // Native Video Playback (Smoothness Fix)
         if (this.contentType === 'video' && this.content) {
+            this.content.currentTime = 0;
             this.content.play().catch(e => console.warn("Video play interrupted", e));
         }
 
@@ -388,23 +459,44 @@ class CanvasRenderer {
             const elapsed = (now - this.startTime) / 1000;
             this.currentTime = elapsed;
 
-            // Calculate total duration based on stops if in human mode
-            let computedHoldStart = this.config.holdStart;
-            if (this.contentType === 'video') computedHoldStart = 0; // Force 0 for videos
+            // Calculate active video time if needed, but for video we rely on loop
+            // For export timing, we track this.
 
-            let totalDuration = computedHoldStart + this.config.duration;
+            let totalDuration = this.config.duration;
             if (this.config.scrollMode === 'human' && this.config.stops.length > 0) {
-                totalDuration += this.config.stops.length * this.config.holdStop;
+                // For video, human scroll mode doesn't really apply unless we pause video?
+                // But user wants "Video rendering logic" fixed. 
+                // We'll stick to simple duration for video.
             }
-            // totalDuration += 2; // REMOVED BUFFER per user request (Exact Duration)
 
-            if (this.currentTime > totalDuration) { this.stop(); if (cb) cb(); return; }
+            // Sync video time if it drifted excessively? 
+            // Usually video.play() handles its own time. We just draw.
+
+            // Stop condition
+            let maxDuration;
+            if (this.contentType === 'video') {
+                // For videos: use exact video duration (already set in config.duration)
+                maxDuration = this.config.duration || 10;
+            } else {
+                // For images: include holdStart for scroll animation
+                maxDuration = (this.config.duration || 10) + (this.config.holdStart || 0);
+                if (this.config.scrollMode === 'human' && this.config.stops.length > 0) {
+                    maxDuration += this.config.stops.length * (this.config.holdStop || 0);
+                }
+            }
+
+            if (this.currentTime > maxDuration) {
+                this.stop();
+                if (cb) cb();
+                return;
+            }
+
             this.draw();
-            // Removed: this.content.currentTime = ... (This caused stutter)
             this.animationId = requestAnimationFrame(loop);
         };
         this.animationId = requestAnimationFrame(loop);
     }
+
     stop() {
         this.isPlaying = false;
         cancelAnimationFrame(this.animationId);
@@ -418,6 +510,25 @@ class CanvasRenderer {
 
         this.draw();
     }
+
+    // --- Drawing ---
+    draw() {
+        // ... (This function calls drawContent. We need to preserve the surrounding draw logic which was not part of the snippet target, 
+        // BUT the tool replaces contiguous blocks. The snippet provided only replaces loadContent, play, stop, and drawContent.
+        // Wait, the snippet target MUST be contiguous.
+        // The previous view_file showed `draw` starting at line 423 and `drawContent` at 696.
+        // I need to check if I can replace just `loadContent`...`drawContent`? No, they are separated by `timestamp`, `play`, `stop`, `draw`...
+        // `draw` is in the middle. I should NOT replace `draw` as it contains complex bezel logic I don't want to rewrite unless I have to.
+        // I will use `multi_replace_file_content` to surgically replace `loadContent` (and friends) and `drawContent`.
+
+        // Wait, the prompt asked me to rewrite that logic "from start".
+        // Let's use multi_replace to target specific blocks.
+        // 1. loadContent -> stop (Lines 344-420)
+        // 2. drawContent (Lines 696-784)
+
+        // I will proceed with multi_replace_file_content.
+    }
+
 
     // --- Drawing ---
     draw() {
@@ -712,14 +823,6 @@ class CanvasRenderer {
             drawW = w;
             drawH = drawW / contentRatio;
 
-            // Optional: Support object-fit: contain (Fit Entire Image) logic
-            // But for scrolling screenshots, Fit Width is usually desired.
-            // If image is WIDER than frame (e.g. desktop screenshot on mobile), Fit Width makes height tiny.
-
-            // Logic:
-            // If drawH < h (Image is shorter than screen): CENTER VERTIALLY (Letterbox)
-            // If drawH >= h (Image is taller): SCROLL (existing logic)
-
             if (drawH < h) {
                 // Center Vertically
                 drawY = y + (h - drawH) / 2;
@@ -752,34 +855,25 @@ class CanvasRenderer {
             ctx.drawImage(this.content, drawX, drawY, drawW, drawH);
 
         } else if (this.contentType === 'video') {
-            // Video: Aspect Fit (Contain)
-            // Never stretch video. 
-            const contentRatio = this.content.videoWidth / this.content.videoHeight;
-            const frameRatio = w / h;
+            // Logic: Fit Width (Match Image Behavior)
+            // This ensures the video fills the device horizontally.
+            // If height overflows, we center it.
+            // If height undershoots, we center it (Letterbox).
 
-            if (contentRatio > frameRatio) {
-                // Content is wider than frame: Fit Width
+            if (this.content.videoWidth) {
+                const contentRatio = this.content.videoWidth / this.content.videoHeight;
+
                 drawW = w;
-                drawH = w / contentRatio;
-
-                // Tolerance Snap (Fix for 1px gaps during scaling)
-                if (Math.abs(drawH - h) < 2) drawH = h;
+                drawH = drawW / contentRatio;
 
                 drawX = x;
-                drawY = y + (h - drawH) / 2; // Center Vertically
+                drawY = y + (h - drawH) / 2;
+
+                ctx.drawImage(this.content, drawX, drawY, drawW, drawH);
             } else {
-                // Content is taller/same: Fit Height
-                drawH = h;
-                drawW = h * contentRatio;
-
-                // Tolerance Snap
-                if (Math.abs(drawW - w) < 2) drawW = w;
-
-                drawY = y;
-                drawX = x + (w - drawW) / 2; // Center Horizontally
+                console.warn("Video dimensions not ready, attempting draw anyway");
+                ctx.drawImage(this.content, x, y, w, h);
             }
-
-            ctx.drawImage(this.content, drawX, drawY, drawW, drawH);
         }
     }
     drawHandles(ctx, x, y, w, h) {
