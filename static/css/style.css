@@ -1,24 +1,39 @@
 :root {
-    /* Reference Theme Palette (Slate/Dark Mode Accents) */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    /* Lighter secondary */
-    --bg-tertiary: #e2e8f0;
+    /* Reference Theme Palette (Landing Page Match) */
+    --bg-primary: #fbfaf6;
+    /* Cream */
+    --bg-secondary: #f0efe9;
+    /* Slightly darker cream for secondary/borders */
+    /* --bg-tertiary: #e2e8f0;  */
+    --bg-tertiary: #e6e5df;
+    /* Even darker for inactive states */
 
-    --text-primary: #0f172a;
-    /* Slate 900 */
-    --text-secondary: #64748b;
-    /* Slate 500 */
+    --text-primary: #1a1a1a;
+    /* Ink */
+    --text-secondary: #5a5a5a;
+    /* Lighter Ink */
 
-    --accent: #0f172a;
-    /* Dark Slate (Almost Black) matching reference */
-    --accent-hover: #1e293b;
-    /* Slightly lighter on hover */
+    --accent: #1a1a1a;
+    /* Ink as accent */
+    --accent-hover: #333333;
 
-    --border: #e2e8f0;
-    /* Slate 200 */
+    --border: #e6e5df;
+    /* Matching tertiary */
     --radius: 0.5rem;
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Didact Gothic', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Playfair Display', serif;
+    --font-script: 'Monsieur La Doulaise', cursive;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
 * {
@@ -39,24 +54,34 @@ body {
 
 /* Header */
 header {
-    height: 60px;
+    height: 70px;
+    /* Slightly taller for the script logo */
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
+    padding: 0 2rem;
     background-color: var(--bg-primary);
 }
 
 .logo {
-    font-weight: 700;
-    font-size: 1.25rem;
+    font-family: var(--font-script);
+    font-weight: 400;
+    font-size: 2.5rem;
+    /* Larger for script font */
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    line-height: 1;
+    /* Fix vertical alignment */
 }
 
-.logo span {
-    color: var(--accent);
+.logo a {
+    color: var(--text-primary);
+    transition: opacity 0.2s;
+}
+
+.logo a:hover {
+    opacity: 0.8;
 }
 
 /* Main Layout */
