@@ -43,7 +43,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:;"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' blob:;"
     return response
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -52,8 +52,13 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 @limiter.limit("60/minute")
-async def read_root(request: Request):
+async def read_landing(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/tool", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def read_tool(request: Request):
+    return templates.TemplateResponse("tool.html", {"request": request})
 
 if __name__ == "__main__":
     import uvicorn
