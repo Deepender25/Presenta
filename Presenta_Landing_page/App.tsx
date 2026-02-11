@@ -121,7 +121,7 @@ const App: React.FC = () => {
                 - pt-28: Clears the header.
                 - justify-center: Vertically centers the content in the viewport.
              */}
-            <div className="flex-1 w-full flex flex-col justify-center pt-20 pb-4 md:pt-24">
+            <div className="flex-1 w-full flex flex-col justify-center pt-40 pb-4 md:pt-24">
               <HeroContent />
             </div>
 
