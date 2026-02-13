@@ -19,7 +19,6 @@ class CanvasRenderer {
             holdStop: 1, // Duration to hold at each stop
             cornerRadius: 0,
             fps: 60,
-            fps: 60,
             shadowSize: 1,
             shadowOpacity: 1,
             bgImage: null // Image Object or null
@@ -1047,6 +1046,12 @@ class CanvasRenderer {
         if (!this.isExporting) return;
         this.exportCancelFlag = true;
 
+        // Stop the deterministic export interval
+        if (this.exportInterval) {
+            clearInterval(this.exportInterval);
+            this.exportInterval = null;
+        }
+
         // Stop Recording
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
             this.mediaRecorder.stop();
@@ -1054,12 +1059,6 @@ class CanvasRenderer {
 
         // Stop Playback
         this.stop();
-
-        // Immediate state restoration (in case recorder onstop is delayed or skipped if not started)
-        // But logic is usually cleaner if we rely on onstop?
-        // Risky if MediaRecorder throws or doesn't fire onstop properly.
-        // Let's rely on onstop but ensure it handles the flag correctly.
-        // If logic is robust, onstop will fire after stop().
         console.log("Export Cancelled");
     }
 
@@ -1177,15 +1176,64 @@ class CanvasRenderer {
 
         this.mediaRecorder.start();
 
-        // Orchestrate Playback for Export
-        // Ensure we start from 0 and record the exact duration
+        // --- Deterministic 60 FPS Export Loop ---
+        // Do NOT use requestAnimationFrame (tied to monitor refresh rate).
+        // Instead, use setInterval at exactly 1000/60ms to guarantee 60 FPS drawing.
         if (this.isPlaying) this.stop();
 
-        this.play(() => {
-            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-                this.mediaRecorder.stop();
-            }
-        });
+        this.currentTime = 0;
+        this.previewProgress = null;
+        this.isPlaying = true; // Mark as playing for draw logic
 
+        if (this.contentType === 'video' && this.content) {
+            this.content.currentTime = 0;
+            this.content.play().catch(e => console.warn("Video play interrupted", e));
+        }
+
+        const FPS = 60;
+        const frameDuration = 1 / FPS; // seconds per frame
+        const intervalMs = 1000 / FPS; // ~16.667ms
+
+        // Calculate total export duration (same logic as play())
+        let maxDuration;
+        if (this.contentType === 'video') {
+            maxDuration = this.config.duration || 10;
+        } else {
+            maxDuration = (this.config.duration || 10) + (this.config.holdStart || 0);
+            if (this.config.scrollMode === 'human' && this.config.stops.length > 0) {
+                maxDuration += this.config.stops.length * (this.config.holdStop || 0);
+            }
+        }
+
+        this.exportInterval = setInterval(() => {
+            if (this.exportCancelFlag) {
+                clearInterval(this.exportInterval);
+                this.exportInterval = null;
+                return;
+            }
+
+            this.currentTime += frameDuration;
+
+            if (this.currentTime > maxDuration) {
+                // Animation complete — stop interval
+                clearInterval(this.exportInterval);
+                this.exportInterval = null;
+                this.isPlaying = false;
+
+                if (this.contentType === 'video' && this.content) {
+                    this.content.pause();
+                }
+
+                // Wait 500ms for MediaRecorder to flush remaining buffered frames
+                setTimeout(() => {
+                    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                        this.mediaRecorder.stop();
+                    }
+                }, 500);
+                return;
+            }
+
+            this.draw();
+        }, intervalMs);
     }
 }
