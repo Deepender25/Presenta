@@ -50,7 +50,7 @@ const App: React.FC = () => {
 
       {/* Floating Header Card */}
       <header
-        className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 w-[auto] min-w-[280px] max-w-[400px] bg-white rounded-full shadow-[0_4px_20px_rgb(0,0,0,0.04)] px-4 py-2 md:px-6 md:py-3 flex justify-between items-center z-50 opacity-0 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
+        className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 w-[92%] max-w-4xl bg-white rounded-full shadow-[0_4px_20px_rgb(0,0,0,0.04)] px-4 py-2 md:px-6 md:py-3 flex justify-between items-center z-50 opacity-0 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
         style={{ animation: 'fadeIn 1s ease forwards 6.2s' }}
       >
         <div className="text-xl md:text-2xl font-script text-ink leading-none mt-1 select-none cursor-pointer">
