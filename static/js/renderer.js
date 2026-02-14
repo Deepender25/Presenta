@@ -19,7 +19,6 @@ class CanvasRenderer {
             holdStop: 1, // Duration to hold at each stop
             cornerRadius: 0,
             fps: 60,
-            fps: 60,
             shadowSize: 1,
             shadowOpacity: 1,
             bgImage: null // Image Object or null
@@ -1047,6 +1046,12 @@ class CanvasRenderer {
         if (!this.isExporting) return;
         this.exportCancelFlag = true;
 
+        // Stop the deterministic export interval
+        if (this.exportInterval) {
+            clearInterval(this.exportInterval);
+            this.exportInterval = null;
+        }
+
         // Stop Recording
         if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
             this.mediaRecorder.stop();
@@ -1054,12 +1059,6 @@ class CanvasRenderer {
 
         // Stop Playback
         this.stop();
-
-        // Immediate state restoration (in case recorder onstop is delayed or skipped if not started)
-        // But logic is usually cleaner if we rely on onstop?
-        // Risky if MediaRecorder throws or doesn't fire onstop properly.
-        // Let's rely on onstop but ensure it handles the flag correctly.
-        // If logic is robust, onstop will fire after stop().
         console.log("Export Cancelled");
     }
 
