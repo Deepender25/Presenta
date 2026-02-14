@@ -572,11 +572,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setExportUI(true);
 
-        renderer.startExport(quality, format, (success) => {
+        renderer.startExport(quality, format, (success, errorMsg) => {
             // Callback on complete or cancel
             setExportUI(false);
             if (!success) {
-                console.log("Export cancelled by user.");
+                if (errorMsg) {
+                    alert(`Export Failed: ${errorMsg}`);
+                } else {
+                    console.log("Export cancelled by user.");
+                }
+            }
+            // Reset text
+            const statusText = exportOverlay.querySelector('p');
+            if (statusText) statusText.textContent = "Creating your masterpiece";
+        }, (progress) => {
+            const statusText = exportOverlay.querySelector('p');
+            if (statusText) {
+                const percent = Math.round(progress * 100);
+                statusText.textContent = `Rendering: ${percent}%`;
             }
         });
     };

@@ -1063,129 +1063,127 @@ class CanvasRenderer {
         console.log("Export Cancelled");
     }
 
-    startExport(quality, format, onComplete) {
-        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
+    startExport(quality, format, onComplete, onProgress) {
         if (this.isExporting) return;
-        this.isExporting = true;
-        this.exportCancelFlag = false;
-
-        // 1. Determine Resolution (Respecting Aspect Ratio)
-        const aspect = this.canvas.width / this.canvas.height;
-        let baseSize = 1080; // Reference short side (1080p)
-
-        if (quality && quality.includes('4K')) {
-            baseSize = 2160; // Reference short side (4K)
-        }
-
-        let targetW, targetH;
-
-        if (aspect >= 1) {
-            // Landscape or Square (Height is reference)
-            targetH = baseSize;
-            targetW = Math.round((baseSize * aspect) / 2) * 2; // Ensure even
-        } else {
-            // Portrait (Width is reference)
-            targetW = baseSize;
-            targetH = Math.round((baseSize / aspect) / 2) * 2; // Ensure even
-        }
-
-        // 2. Determine Format / MimeType
-        let mimeType = 'video/webm;codecs=vp9';
-        let ext = 'webm';
-        if (format === 'MP4') {
-            // Check support
-            if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E,mp4a.40.2')) {
-                mimeType = 'video/mp4;codecs=avc1.42E01E,mp4a.40.2';
-                ext = 'mp4';
-            } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-                mimeType = 'video/mp4';
-                ext = 'mp4';
-            } else {
-                console.warn("MP4 export not supported by this browser. Falling back to WebM.");
-            }
-        }
-
-        // 3. Save Original State
-        const origCanvasW = this.canvas.width;
-        const origCanvasH = this.canvas.height;
-        const origFrameW = this.frame.width;
-        const origFrameH = this.frame.height;
-        const origRadius = this.config.cornerRadius;
-        const origShadow = this.config.shadowSize;
-
-        // 4. Resize Canvas & Scale Content
-        // Calculate scale relative to current canvas
-        const scale = targetW / origCanvasW;
-
-        this.canvas.width = targetW;
-        this.canvas.height = targetH;
-
-        // Scale Frame
-        this.frame.width = Math.round(origFrameW * scale);
-        this.frame.height = Math.round(origFrameH * scale);
-
-        // Set Global Scale for draw()
-        this.config.scale = scale;
-
-        this.updateFramePosition();
-        this.draw();
-
-        const stream = this.canvas.captureStream(60);
-        this.recordedChunks = [];
-
-        // Increase bitrate for higher text clarity (especially 4K)
-        const pixelCount = targetW * targetH;
-        // 1920*1080 = 2,073,600. If significantly higher, use high bitrate.
-        const videoBits = pixelCount > 2500000 ? 25000000 : 8000000;
-        const options = { mimeType: mimeType, videoBitsPerSecond: videoBits };
+        this.isExporting = true; // Block immediately
 
         try {
-            this.mediaRecorder = new MediaRecorder(stream, options);
-        } catch (e) {
-            console.error("MediaRecorder error:", e);
-            // Fallback to basic
-            this.mediaRecorder = new MediaRecorder(stream);
-        }
+            // 1. Determine Resolution
+            const aspect = this.canvas.width / this.canvas.height;
+            let baseSize = 1080;
+            let bitrate = 8_000_000; // 8 Mbps for 1080p
 
-        this.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) this.recordedChunks.push(e.data); };
-        this.mediaRecorder.onstop = () => {
-            // Restore Original State
-            this.config.scale = 1;
-            this.canvas.width = origCanvasW;
-            this.canvas.height = origCanvasH;
-            this.frame.width = origFrameW;
-            this.frame.height = origFrameH;
+            if (quality && quality.includes('4K')) {
+                baseSize = 2160;
+                bitrate = 25_000_000; // 25 Mbps for 4K
+            }
 
+            let targetW, targetH;
+            if (aspect >= 1) {
+                targetH = baseSize;
+                targetW = Math.round((baseSize * aspect) / 2) * 2;
+            } else {
+                targetW = baseSize;
+                targetH = Math.round((baseSize / aspect) / 2) * 2;
+            }
+
+            // 2. Save State
+            const origCanvasW = this.canvas.width;
+            const origCanvasH = this.canvas.height;
+            const origFrameW = this.frame.width;
+            const origFrameH = this.frame.height;
+            const origScale = this.config.scale || 1;
+
+            // 3. Resize & Scale
+            const scale = targetW / origCanvasW;
+            this.canvas.width = targetW;
+            this.canvas.height = targetH;
+            this.frame.width = Math.round(origFrameW * scale);
+            this.frame.height = Math.round(origFrameH * scale);
+
+            // Store Original Scale to restore later
+            this.config.scale = scale;
             this.updateFramePosition();
+
+            // 4. Start VideoExporter
+            // Check if VideoExporter exists
+            if (typeof VideoExporter === 'undefined') {
+                throw new Error("VideoExporter library not loaded. Please refresh the page.");
+            }
+
+            this.videoExporter = new VideoExporter();
+
+            const config = {
+                width: targetW,
+                height: targetH,
+                fps: 60,
+                duration: this.config.duration,
+                bitrate: bitrate,
+                format: format && format.toLowerCase() === 'mp4' ? 'mp4' : 'webm'
+            };
+
+            this.videoExporter.export(this, config,
+                (progress) => {
+                    if (onProgress) onProgress(progress);
+                },
+                (success, data) => {
+                    // Restore State regardless of success/fail
+                    this.config.scale = origScale;
+                    this.canvas.width = origCanvasW;
+                    this.canvas.height = origCanvasH;
+                    this.frame.width = origFrameW;
+                    this.frame.height = origFrameH;
+                    this.updateFramePosition();
+                    this.draw();
+
+                    this.isExporting = false; // Reset flag
+
+                    if (success && data) {
+                        // Download
+                        const isMp4 = config.format === 'mp4';
+                        const ext = isMp4 ? 'mp4' : 'webm';
+                        const url = URL.createObjectURL(data);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `presenta-export-${quality.includes('4K') ? '4k' : '1080p'}.${ext}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        if (onComplete) onComplete(true);
+                    } else {
+                        // Pass error message if data is string?
+                        console.error("Export failed:", data);
+                        if (onComplete) onComplete(false, data);
+                    }
+                    this.videoExporter = null;
+                }
+            ).catch(err => {
+                console.error("Export startup failed:", err);
+                // Restore State
+                this.config.scale = origScale;
+                this.canvas.width = origCanvasW;
+                this.canvas.height = origCanvasH;
+                this.frame.width = origFrameW;
+                this.frame.height = origFrameH;
+                this.updateFramePosition();
+                this.draw();
+
+                this.isExporting = false;
+                this.videoExporter = null;
+                if (onComplete) onComplete(false, err.message);
+            });
+
+        } catch (e) {
+            console.error("Export Error:", e);
             this.isExporting = false;
-            this.draw();
+            if (onComplete) onComplete(false, e.message);
+        }
+    }
 
-            if (this.exportCancelFlag) {
-                // Cancelled - Do not download
-                if (onComplete) onComplete(false); // false = cancelled
-                return;
-            }
-
-            const blob = new Blob(this.recordedChunks, { type: mimeType.split(';')[0] });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.style.display = 'none'; a.href = url;
-            a.download = `presenta-export.${ext}`;
-            document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
-
-            if (onComplete) onComplete(true); // true = complete
-        };
-
-        this.mediaRecorder.start();
-
-        // Orchestrate Playback for Export
-        // Ensure we start from 0 and record the exact duration
-        if (this.isPlaying) this.stop();
-
-        this.play(() => {
-            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-                this.mediaRecorder.stop();
-            }
-        });
-
+    cancelExport() {
+        if (this.videoExporter) {
+            this.videoExporter.cancel();
+        }
     }
 }
