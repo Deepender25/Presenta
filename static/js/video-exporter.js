@@ -152,95 +152,81 @@ class VideoExporter {
         // Save original renderer state
         const originalTime = renderer.currentTime;
 
-        let frameIndex = 0;
+        // --- Iterative Frame Processing Loop ---
+        // Uses a for-loop with explicit yields to prevent browser freeze,
+        // especially critical for image exports where there's no natural async pause.
+        const processFrames = async () => {
+            for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+                if (this.cancelFlag) {
+                    videoEncoder.close();
+                    renderer.isExporting = false;
+                    onComplete(false, "Cancelled");
+                    return;
+                }
 
-        const processFrame = async () => {
-            if (this.cancelFlag) {
-                videoEncoder.close();
-                renderer.isExporting = false;
-                onComplete(false, "Cancelled");
-                return;
-            }
+                // 1. Set Time
+                const time = frameIndex * frameBackendDuration;
+                renderer.currentTime = time;
 
-            if (frameIndex >= totalFrames) {
-                // Finish
-                await videoEncoder.flush();
-                muxer.finalize();
-                const buffer = muxer.target.buffer;
-                const blob = new Blob([buffer], { type: isMp4 ? 'video/mp4' : 'video/webm' });
+                // 2. For video: seek to exact time and wait
+                if (renderer.contentType === 'video' && renderer.content) {
+                    const seekTarget = time % renderer.content.duration;
+                    renderer.content.currentTime = seekTarget;
 
-                renderer.isExporting = false;
-                renderer.currentTime = originalTime; // Restore
-                renderer.draw(); // Restore view
+                    await new Promise(resolve => {
+                        const onSeeked = () => {
+                            renderer.content.removeEventListener('seeked', onSeeked);
+                            resolve();
+                        };
+                        renderer.content.addEventListener('seeked', onSeeked, { once: true });
+                        // Safety timeout in case seeked never fires
+                        setTimeout(resolve, 100);
+                    });
+                }
 
-                onComplete(true, blob);
-                return;
-            }
+                // 3. Draw frame to canvas (synchronous for both image and video)
+                renderer.draw();
 
-            // 1. Set Time
-            const time = frameIndex * frameBackendDuration;
-            renderer.currentTime = time;
+                // 4. Create bitmap from canvas
+                const bitmap = await createImageBitmap(renderer.canvas);
 
-            // 2. Draw (Synchronous Canvas Draw)
-            // Ideally renderer.draw() should be synchronous or we await it if it has async parts (images usually preloaded)
-            // Given renderer.js, draw() seems synchronous except for video.
-            // For video content, we need to seek the video element.
-
-            if (renderer.contentType === 'video' && renderer.content) {
-                // Seek video to exact time
-                renderer.content.currentTime = time % renderer.content.duration; // Loop support
-
-                // Wait for 'seeked' event? 
-                // In many browsers setting currentTime is not instant.
-                await new Promise(resolve => {
-                    const onSeeked = () => {
-                        renderer.content.removeEventListener('seeked', onSeeked);
-                        resolve();
-                    };
-                    renderer.content.addEventListener('seeked', onSeeked, { once: true });
-
-                    // Fallback if already seeked or fast
-                    if (Math.abs(renderer.content.currentTime - (time % renderer.content.duration)) < 0.1) {
-                        // Sometimes it's instant, but safe to wait for event
-                    }
+                const frame = new VideoFrame(bitmap, {
+                    timestamp: frameIndex * (1000000 / fps), // microseconds
+                    duration: (1000000 / fps)
                 });
-            }
 
-            renderer.draw(); // Draw to canvas
+                // 5. Close bitmap IMMEDIATELY to free GPU memory (~33MB per frame at 4K)
+                bitmap.close();
 
-            // 3. Create VideoFrame
-            // We need a bitmap or can pass canvas directly.
-            // Converting canvas to bitmap is async.
-            const bitmap = await createImageBitmap(renderer.canvas);
+                // 6. Encode with proper back-pressure
+                // Wait until encoder queue drains to prevent OOM
+                while (videoEncoder.encodeQueueSize > 3) {
+                    await new Promise(r => setTimeout(r, 5));
+                }
 
-            const frame = new VideoFrame(bitmap, {
-                timestamp: frameIndex * (1000000 / fps), // microseconds
-                duration: (1000000 / fps)
-            });
+                videoEncoder.encode(frame, { keyFrame: frameIndex % (fps * 2) === 0 });
+                frame.close();
 
-            // 4. Encode
-            // encode() is non-blocking but we should monitor queue depth to avoid OOM
-            if (videoEncoder.encodeQueueSize > 5) {
-                // Wait a bit to let encoder catch up
-                await new Promise(r => setTimeout(r, 10)); // simple yield
-            }
-
-            videoEncoder.encode(frame, { keyFrame: frameIndex % (fps * 2) === 0 });
-            frame.close(); // Important to close frame to release memory
-
-            // Progress
-            if (frameIndex % 10 === 0) {
+                // 7. Report progress and ALWAYS yield to keep browser responsive
                 onProgress(frameIndex / totalFrames);
-                // Yield to UI to allow progress bar update and cancel button click
                 await new Promise(r => setTimeout(r, 0));
             }
 
-            frameIndex++;
-            processFrame(); // Next frame (recursive/loop)
+            // All frames encoded — finalize
+            await videoEncoder.flush();
+            muxer.finalize();
+            const buffer = muxer.target.buffer;
+            const blob = new Blob([buffer], { type: isMp4 ? 'video/mp4' : 'video/webm' });
+
+            renderer.isExporting = false;
+            renderer.currentTime = originalTime;
+            renderer.draw();
+
+            onComplete(true, blob);
         };
 
-        // Start Loop
-        processFrame();
+        // Start
+        processFrames();
     }
 
     cancel() {
