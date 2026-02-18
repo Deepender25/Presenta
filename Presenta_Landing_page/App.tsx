@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { CinematicLogo } from './components/CinematicLogo';
 import { HeroContent } from './components/HeroContent';
 import { PlatformTicker } from './components/PlatformTicker';
@@ -9,39 +9,76 @@ import { TechSpecs } from './components/TechSpecs';
 import { Footer } from './components/Footer';
 import { ANIMATION_STYLES } from './constants';
 
+import { Documentation } from './components/Documentation';
+
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'landing' | 'docs'>('landing');
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  // Handle hash changes for routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#docs') {
+        setCurrentView('docs');
+      } else {
+        setCurrentView('landing');
+      }
+    };
+
+    // Initial check
+    handleHashChange();
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   // Force scroll to top on mount to ensure animation plays from start
   useLayoutEffect(() => {
-    // Disable default browser scroll restoration
-    if (history.scrollRestoration) {
-      history.scrollRestoration = 'manual';
-    }
+    if (currentView === 'landing') {
+      // Disable default browser scroll restoration
+      if (history.scrollRestoration) {
+        history.scrollRestoration = 'manual';
+      }
 
-    // Force scroll to top immediately
-    window.scrollTo(0, 0);
-
-    // Safety check: ensure we're at top even after a small delay
-    // This helps with some browsers that might try to restore scroll later
-    const timeout = setTimeout(() => {
+      // Force scroll to top immediately
       window.scrollTo(0, 0);
-    }, 10);
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
+      // Safety check: ensure we're at top even after a small delay
+      // This helps with some browsers that might try to restore scroll later
+      const timeout = setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 10);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [currentView]);
 
   const scrollToSection = (id: string) => {
     setIsMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    if (currentView !== 'landing') {
+      window.location.hash = '';
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
+
+  if (currentView === 'docs') {
+    return <Documentation onBack={() => window.location.hash = ''} />;
+  }
 
   return (
     <div className="relative w-full bg-cream font-sans overflow-x-hidden overflow-y-auto no-scrollbar scroll-smooth">
@@ -53,7 +90,7 @@ const App: React.FC = () => {
         className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 w-[92%] max-w-4xl bg-white rounded-full shadow-[0_4px_20px_rgb(0,0,0,0.04)] px-4 py-2 md:px-6 md:py-3 flex justify-between items-center z-50 opacity-0 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
         style={{ animation: 'fadeIn 1s ease forwards 6.2s' }}
       >
-        <div className="text-xl md:text-2xl font-script text-ink leading-none mt-1 select-none cursor-pointer">
+        <div className="text-xl md:text-2xl font-script text-ink leading-none mt-1 select-none cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           Presenta
         </div>
         <button
@@ -76,6 +113,7 @@ const App: React.FC = () => {
           <button onClick={() => scrollToSection('features')} className="text-3xl font-serif-display text-ink hover:text-gray-600 transition-colors">Features</button>
           <button onClick={() => scrollToSection('use-cases')} className="text-3xl font-serif-display text-ink hover:text-gray-600 transition-colors">Use Cases</button>
           <button onClick={() => scrollToSection('tech-specs')} className="text-3xl font-serif-display text-ink hover:text-gray-600 transition-colors">Specs</button>
+          <button onClick={() => { setIsMenuOpen(false); window.location.hash = '#docs'; }} className="text-3xl font-serif-display text-ink hover:text-gray-600 transition-colors">Docs</button>
         </div>
       </div>
 

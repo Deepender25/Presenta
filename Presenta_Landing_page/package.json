@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && copy ..\\static\\landing\\index.html ..\\templates\\index.html",
     "preview": "vite preview"
   },
   "dependencies": {
