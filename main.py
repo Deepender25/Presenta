@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -54,6 +54,14 @@ templates = Jinja2Templates(directory="templates")
 @limiter.limit("60/minute")
 async def read_landing(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/robots.txt", response_class=FileResponse)
+async def robots_txt():
+    return FileResponse("static/landing/robots.txt", media_type="text/plain")
+
+@app.get("/sitemap.xml", response_class=FileResponse)
+async def sitemap_xml():
+    return FileResponse("static/landing/sitemap.xml", media_type="application/xml")
 
 @app.get("/tool", response_class=HTMLResponse)
 @limiter.limit("60/minute")
