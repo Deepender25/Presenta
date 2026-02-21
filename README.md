@@ -1,5 +1,6 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150x150.png?text=Presenta+Logo" alt="Presenta Logo" width="120" height="120">
+  <img width="600" height="315" alt="preview-image" src="https://github.com/user-attachments/assets/5b3ab219-20c4-40cf-bba4-a859c93310a5" />
+
   
   # ✨ Presenta ✨
   
@@ -29,18 +30,14 @@ Check out what you can create with **Presenta**! Below are some examples of our 
 
 ### 🎥 Videos
 <div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <video src="https://raw.githubusercontent.com/Deepender25/Presenta/main/assets/demo1.mp4" width="400" autoplay loop muted playsinline></video>
-        <br/><b>Smooth Scrolling Demo</b>
-      </td>
-      <td align="center">
-        <video src="https://raw.githubusercontent.com/Deepender25/Presenta/main/assets/demo2.mp4" width="400" autoplay loop muted playsinline></video>
-        <br/><b>Device Frame Export</b>
-      </td>
-    </tr>
-  </table>
+  
+
+
+https://github.com/user-attachments/assets/9b44111c-65e4-4ee0-b0c9-a600ccf8fe47
+
+
+https://github.com/user-attachments/assets/d39ece85-da96-4db3-91b6-4b4e614065f5
+
 </div>
 
 ### 🖼️ Screenshots
@@ -50,12 +47,10 @@ Check out what you can create with **Presenta**! Below are some examples of our 
       <td align="center">
         <!-- 🔥 Place 'Screenshot1.png' in the 'assets' folder and push to GitHub. 🔥 -->
         <img src="https://github.com/Deepender25/Presenta/raw/main/assets/Screenshot1.png" alt="Screenshot 1 Example" width="400"/>
-        <br/><b>Browser Window Frame</b>
       </td>
       <td align="center">
         <!-- 🔥 Place 'Screenshot2.png' in the 'assets' folder and push to GitHub. 🔥 -->
         <img src="https://github.com/Deepender25/Presenta/raw/main/assets/Screenshot2.png" alt="Screenshot 2 Example" width="400"/>
-        <br/><b>Mobile Mockup View</b>
       </td>
     </tr>
   </table>
