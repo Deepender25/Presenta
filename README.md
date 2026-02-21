@@ -32,13 +32,11 @@ Check out what you can create with **Presenta**! Below are some examples of our 
   <table>
     <tr>
       <td align="center">
-        <!-- GitHub naturally embeds direct video URLs -->
-        https://github.com/Deepender25/Presenta/raw/main/assets/demo1.mp4
+        <video src="https://raw.githubusercontent.com/Deepender25/Presenta/main/assets/demo1.mp4" width="400" autoplay loop muted playsinline></video>
         <br/><b>Smooth Scrolling Demo</b>
       </td>
       <td align="center">
-        <!-- GitHub naturally embeds direct video URLs -->
-        https://github.com/Deepender25/Presenta/raw/main/assets/demo2.mp4
+        <video src="https://raw.githubusercontent.com/Deepender25/Presenta/main/assets/demo2.mp4" width="400" autoplay loop muted playsinline></video>
         <br/><b>Device Frame Export</b>
       </td>
     </tr>
