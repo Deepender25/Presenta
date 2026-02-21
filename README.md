@@ -32,17 +32,17 @@ Check out what you can create with **Presenta**! Below are some examples of our 
   <table>
     <tr>
       <td align="center">
-        <!-- 🔥 REPLACE 'src' with your FIRST VIDEO URL/path 🔥 -->
+        <!-- 🔥 To use videos hosted in this repository, place 'demo1.mp4' in an 'assets' folder and push to GitHub. 🔥 -->
         <video width="400" autoplay loop muted playsinline>
-          <source src="https://via.placeholder.com/400x225.mp4?text=Video+1+Placeholder" type="video/mp4">
+          <source src="./assets/demo1.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
         <br/><b>Smooth Scrolling Demo</b>
       </td>
       <td align="center">
-        <!-- 🔥 REPLACE 'src' with your SECOND VIDEO URL/path 🔥 -->
+        <!-- 🔥 To use videos hosted in this repository, place 'demo2.mp4' in an 'assets' folder and push to GitHub. 🔥 -->
         <video width="400" autoplay loop muted playsinline>
-          <source src="https://via.placeholder.com/400x225.mp4?text=Video+2+Placeholder" type="video/mp4">
+          <source src="./assets/demo2.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
         <br/><b>Device Frame Export</b>
@@ -56,13 +56,13 @@ Check out what you can create with **Presenta**! Below are some examples of our 
   <table>
     <tr>
       <td align="center">
-        <!-- 🔥 REPLACE 'src' with your FIRST IMAGE URL/path 🔥 -->
-        <img src="https://via.placeholder.com/400x225.png?text=Screenshot+1+Placeholder" alt="Screenshot 1 Example" width="400"/>
+        <!-- 🔥 Place 'screenshot1.png' in the 'assets' folder and push to GitHub. 🔥 -->
+        <img src="./assets/screenshot1.png" alt="Screenshot 1 Example" width="400"/>
         <br/><b>Browser Window Frame</b>
       </td>
       <td align="center">
-        <!-- 🔥 REPLACE 'src' with your SECOND IMAGE URL/path 🔥 -->
-        <img src="https://via.placeholder.com/400x225.png?text=Screenshot+2+Placeholder" alt="Screenshot 2 Example" width="400"/>
+        <!-- 🔥 Place 'screenshot2.png' in the 'assets' folder and push to GitHub. 🔥 -->
+        <img src="./assets/screenshot2.png" alt="Screenshot 2 Example" width="400"/>
         <br/><b>Mobile Mockup View</b>
       </td>
     </tr>
