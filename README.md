@@ -33,16 +33,14 @@ Check out what you can create with **Presenta**! Below are some examples of our 
     <tr>
       <td align="center">
         <!-- 🔥 To use videos hosted in this repository, place 'demo1.mp4' in an 'assets' folder and push to GitHub. 🔥 -->
-        <video width="400" autoplay loop muted playsinline>
-          <source src="./assets/demo1.mp4" type="video/mp4">
+        <video width="400" autoplay loop muted playsinline src="https://github.com/Deepender25/Presenta/raw/main/assets/demo1.mp4">
           Your browser does not support the video tag.
         </video>
         <br/><b>Smooth Scrolling Demo</b>
       </td>
       <td align="center">
         <!-- 🔥 To use videos hosted in this repository, place 'demo2.mp4' in an 'assets' folder and push to GitHub. 🔥 -->
-        <video width="400" autoplay loop muted playsinline>
-          <source src="./assets/demo2.mp4" type="video/mp4">
+        <video width="400" autoplay loop muted playsinline src="https://github.com/Deepender25/Presenta/raw/main/assets/demo2.mp4">
           Your browser does not support the video tag.
         </video>
         <br/><b>Device Frame Export</b>
@@ -56,13 +54,13 @@ Check out what you can create with **Presenta**! Below are some examples of our 
   <table>
     <tr>
       <td align="center">
-        <!-- 🔥 Place 'screenshot1.png' in the 'assets' folder and push to GitHub. 🔥 -->
-        <img src="./assets/screenshot1.png" alt="Screenshot 1 Example" width="400"/>
+        <!-- 🔥 Place 'Screenshot1.png' in the 'assets' folder and push to GitHub. 🔥 -->
+        <img src="https://github.com/Deepender25/Presenta/raw/main/assets/Screenshot1.png" alt="Screenshot 1 Example" width="400"/>
         <br/><b>Browser Window Frame</b>
       </td>
       <td align="center">
-        <!-- 🔥 Place 'screenshot2.png' in the 'assets' folder and push to GitHub. 🔥 -->
-        <img src="./assets/screenshot2.png" alt="Screenshot 2 Example" width="400"/>
+        <!-- 🔥 Place 'Screenshot2.png' in the 'assets' folder and push to GitHub. 🔥 -->
+        <img src="https://github.com/Deepender25/Presenta/raw/main/assets/Screenshot2.png" alt="Screenshot 2 Example" width="400"/>
         <br/><b>Mobile Mockup View</b>
       </td>
     </tr>
