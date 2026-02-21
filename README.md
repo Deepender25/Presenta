@@ -32,17 +32,13 @@ Check out what you can create with **Presenta**! Below are some examples of our 
   <table>
     <tr>
       <td align="center">
-        <!-- 🔥 To use videos hosted in this repository, place 'demo1.mp4' in an 'assets' folder and push to GitHub. 🔥 -->
-        <video width="400" autoplay loop muted playsinline src="https://github.com/Deepender25/Presenta/raw/main/assets/demo1.mp4">
-          Your browser does not support the video tag.
-        </video>
+        <!-- GitHub naturally embeds direct video URLs -->
+        https://github.com/Deepender25/Presenta/raw/main/assets/demo1.mp4
         <br/><b>Smooth Scrolling Demo</b>
       </td>
       <td align="center">
-        <!-- 🔥 To use videos hosted in this repository, place 'demo2.mp4' in an 'assets' folder and push to GitHub. 🔥 -->
-        <video width="400" autoplay loop muted playsinline src="https://github.com/Deepender25/Presenta/raw/main/assets/demo2.mp4">
-          Your browser does not support the video tag.
-        </video>
+        <!-- GitHub naturally embeds direct video URLs -->
+        https://github.com/Deepender25/Presenta/raw/main/assets/demo2.mp4
         <br/><b>Device Frame Export</b>
       </td>
     </tr>
